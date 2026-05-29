@@ -20,6 +20,7 @@ import productivityRoutes from './routes/productivity.routes';
 import milestonesRoutes from './routes/milestones.routes';
 import reportsRoutes from './routes/reports.routes';
 import aiRoutes from './routes/ai.routes';
+import notificationRoutes from './routes/notification.routes';
 
 const app = express();
 const port = process.env.PORT || 3005;
@@ -35,19 +36,7 @@ redis.on('error', (err) => {
 });
 
 // BullMQ Setup
-const connection = redis;
-export const queues = {
-  auditReminder: new Queue('audit-reminder', { connection }),
-  reportReminder: new Queue('report-reminder', { connection }),
-  whatsappDigest: new Queue('whatsapp-digest', { connection }),
-  milestoneOverdue: new Queue('milestone-overdue', { connection })
-};
-
-// Stub workers
-new Worker('audit-reminder', async job => { console.log('Processing audit-reminder', job.id); }, { connection });
-new Worker('report-reminder', async job => { console.log('Processing report-reminder', job.id); }, { connection });
-new Worker('whatsapp-digest', async job => { console.log('Processing whatsapp-digest', job.id); }, { connection });
-new Worker('milestone-overdue', async job => { console.log('Processing milestone-overdue', job.id); }, { connection });
+import { queues } from './queues';
 
 // Middleware
 app.use(cors());
@@ -72,6 +61,7 @@ app.use('/api/productivity', productivityRoutes);
 app.use('/api/milestones', milestonesRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

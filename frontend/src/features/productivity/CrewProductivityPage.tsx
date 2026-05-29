@@ -266,8 +266,19 @@ export const CrewProductivityPage: React.FC = () => {
                         const note = window.prompt('Enter note for Project Manager:');
                         if (note) {
                           try {
+                            // Hit the specific productivity flag endpoint
                             await apiClient.post(`/productivity/crews/${selectedCrew.id}/flag`, { note });
-                            showToast('Flagged for PM review', 'success');
+                            
+                            // Dispatch WhatsApp notification
+                            await apiClient.post('/notifications/whatsapp', {
+                              type: 'pm-manual-reminder',
+                              payload: {
+                                engineerName: 'Site Engineer',
+                                message: note
+                              }
+                            });
+
+                            showToast('Flagged for PM review & notification sent', 'success');
                           } catch(e) {
                             showToast('Failed to flag crew', 'error');
                           }
