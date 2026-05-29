@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BuildWise - Concrete Estimator</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#faf9fc",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#a9caef",
+                        "tertiary-fixed": "#d1e4fe",
+                        "on-surface-variant": "#43474d",
+                        "outline-variant": "#c3c7ce",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed-variant": "#822800",
+                        "on-secondary-container": "#551700",
+                        "on-surface": "#1a1c1e",
+                        "surface-dim": "#dadadd",
+                        "on-tertiary-fixed": "#091d2f",
+                        "tertiary": "#142639",
+                        "surface-container-high": "#e8e8eb",
+                        "on-secondary-fixed": "#390c00",
+                        "on-primary-fixed-variant": "#284969",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#ffb59c",
+                        "outline": "#73777e",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f4f3f6",
+                        "tertiary-fixed-dim": "#b6c8e1",
+                        "on-primary-fixed": "#001d34",
+                        "background": "#faf9fc",
+                        "surface-container-highest": "#e3e2e5",
+                        "on-background": "#1a1c1e",
+                        "primary": "#002743",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-container": "#94a6be",
+                        "on-tertiary-fixed-variant": "#36485d",
+                        "inverse-surface": "#2f3033",
+                        "tertiary-container": "#2a3c50",
+                        "surface": "#faf9fc",
+                        "surface-container": "#eeedf0",
+                        "inverse-on-surface": "#f1f0f3",
+                        "inverse-primary": "#a9caef",
+                        "on-error": "#ffffff",
+                        "on-primary-container": "#88a8cc",
+                        "secondary-fixed": "#ffdbcf",
+                        "primary-fixed": "#cfe4ff",
+                        "surface-variant": "#e3e2e5",
+                        "secondary": "#aa3600",
+                        "primary-container": "#1a3d5c",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#fe5f1d",
+                        "surface-tint": "#416182"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "content-max-width": "1200px",
+                        "density-tight": "8px",
+                        "sidebar-width": "220px",
+                        "page-padding": "28px",
+                        "topbar-height": "56px",
+                        "gutter": "16px",
+                        "component-gap": "12px"
+                    },
+                    "fontFamily": {
+                        "page-title": ["IBM Plex Sans"],
+                        "card-label": ["IBM Plex Sans"],
+                        "label-caps": ["IBM Plex Sans"],
+                        "section-heading": ["IBM Plex Sans"],
+                        "body": ["IBM Plex Sans"]
+                    },
+                    "fontSize": {
+                        "page-title": ["20px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "card-label": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "section-heading": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "body": ["13px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: #E5E7EB;
+            border-radius: 2px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #1A3D5C;
+            cursor: pointer;
+        }
+        .bg-industrial-pattern {
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body text-body m-0 p-0 overflow-x-hidden">
+<!-- TopNavBar -->
+<header class="bg-surface-lowest dark:bg-surface-container-low text-primary dark:text-primary-fixed fixed top-0 right-0 h-topbar-height w-[calc(100%-220px)] border-b border-outline-variant flex justify-between items-center px-page-padding z-50">
+<div class="flex items-center gap-4">
+<h1 class="font-page-title text-page-title font-bold text-primary">BuildWise</h1>
+<span class="text-on-surface-variant text-body">/ Concrete estimator</span>
+</div>
+<div class="flex items-center gap-4 hidden">
+<!-- Search hidden as per json -->
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded hover:bg-surface-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="language">language</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded hover:bg-surface-variant relative">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-secondary-container rounded-full"></span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded hover:bg-surface-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- SideNavBar -->
+<nav class="bg-primary dark:bg-primary-container fixed left-0 top-0 h-screen w-sidebar-width border-r border-outline-variant flex flex-col h-full py-4 z-50">
+<div class="px-6 mb-8 flex flex-col gap-1">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-8 h-8 bg-on-primary rounded flex items-center justify-center text-primary font-bold">BW</div>
+<div>
+<div class="font-page-title text-page-title font-bold text-on-primary text-[16px] leading-tight">Project Alpha</div>
+<div class="text-on-primary-fixed-variant text-[11px]">Construction Site</div>
+</div>
+</div>
+<button class="mt-4 w-full bg-secondary-container text-on-secondary-container font-card-label py-2 px-4 rounded hover:bg-opacity-90 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[16px]">add</span> Add New Resource
+            </button>
+</div>
+<div class="flex-1 overflow-y-auto flex flex-col gap-1">
+<!-- Tab 1 -->
+<a class="flex items-center gap-3 px-6 py-2.5 text-on-primary-fixed-variant hover:text-on-primary hover:bg-primary-container/50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-active:scale-[0.98] transition-all" data-icon="dashboard">dashboard</span>
+<span class="font-card-label group-active:scale-[0.98] transition-all">Dashboard</span>
+</a>
+<!-- Tab 2 -->
+<a class="flex items-center gap-3 px-6 py-2.5 text-on-primary-fixed-variant hover:text-on-primary hover:bg-primary-container/50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-active:scale-[0.98] transition-all" data-icon="architecture">architecture</span>
+<span class="font-card-label group-active:scale-[0.98] transition-all">Projects</span>
+</a>
+<!-- Tab 3 (Active) -->
+<a class="flex items-center gap-3 px-6 py-2.5 border-l-4 border-secondary bg-secondary-container/10 text-on-primary font-bold hover:bg-primary-container/50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-active:scale-[0.98] transition-all" data-icon="calculate" data-weight="fill" style="font-variation-settings: 'FILL' 1;">calculate</span>
+<span class="font-card-label group-active:scale-[0.98] transition-all">Concrete estimator</span>
+</a>
+<!-- Tab 4 -->
+<a class="flex items-center gap-3 px-6 py-2.5 text-on-primary-fixed-variant hover:text-on-primary hover:bg-primary-container/50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-active:scale-[0.98] transition-all" data-icon="precision_manufacturing">precision_manufacturing</span>
+<span class="font-card-label group-active:scale-[0.98] transition-all">Steel optimizer</span>
+</a>
+<!-- Tab 5 -->
+<a class="flex items-center gap-3 px-6 py-2.5 text-on-primary-fixed-variant hover:text-on-primary hover:bg-primary-container/50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-active:scale-[0.98] transition-all" data-icon="inventory_2">inventory_2</span>
+<span class="font-card-label group-active:scale-[0.98] transition-all">Material audit</span>
+</a>
+<!-- Tab 6 -->
+<a class="flex items-center gap-3 px-6 py-2.5 text-on-primary-fixed-variant hover:text-on-primary hover:bg-primary-container/50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-active:scale-[0.98] transition-all" data-icon="warehouse">warehouse</span>
+<span class="font-card-label group-active:scale-[0.98] transition-all">Inventory</span>
+</a>
+<!-- Tab 7 -->
+<a class="flex items-center gap-3 px-6 py-2.5 text-on-primary-fixed-variant hover:text-on-primary hover:bg-primary-container/50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-active:scale-[0.98] transition-all" data-icon="cloud_sync">cloud_sync</span>
+<span class="font-card-label group-active:scale-[0.98] transition-all">Weather risk</span>
+</a>
+<!-- Tab 8 -->
+<a class="flex items-center gap-3 px-6 py-2.5 text-on-primary-fixed-variant hover:text-on-primary hover:bg-primary-container/50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-active:scale-[0.98] transition-all" data-icon="analytics">analytics</span>
+<span class="font-card-label group-active:scale-[0.98] transition-all">Reports</span>
+</a>
+</div>
+<div class="mt-auto flex flex-col gap-1 border-t border-primary-fixed-variant pt-4">
+<a class="flex items-center gap-3 px-6 py-2.5 text-on-primary-fixed-variant hover:text-on-primary hover:bg-primary-container/50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-active:scale-[0.98] transition-all" data-icon="settings">settings</span>
+<span class="font-card-label group-active:scale-[0.98] transition-all">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-2.5 text-on-primary-fixed-variant hover:text-on-primary hover:bg-primary-container/50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-active:scale-[0.98] transition-all" data-icon="help">help</span>
+<span class="font-card-label group-active:scale-[0.98] transition-all">Support</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="ml-[220px] mt-[56px] min-h-[calc(100vh-56px)] bg-industrial-pattern p-page-padding flex justify-center">
+<div class="w-full max-w-[1200px] flex flex-col gap-6">
+<!-- Two Column Split Layout -->
+<div class="flex flex-col lg:flex-row gap-6 w-full">
+<!-- Left Column (45%): Input Configuration -->
+<div class="w-full lg:w-[45%] flex flex-col gap-4">
+<!-- Structure Type Selector -->
+<div class="bg-surface-lowest border border-outline-variant rounded p-4">
+<div class="font-section-heading text-section-heading text-on-surface mb-4">Structure Type</div>
+<div class="grid grid-cols-4 gap-2">
+<!-- Slab (Active) -->
+<button class="flex flex-col items-center justify-center gap-2 p-3 bg-primary-container/5 border border-primary-container text-primary-container rounded cursor-pointer transition-colors relative overflow-hidden">
+<span class="material-symbols-outlined text-[24px]">layers</span>
+<span class="font-label-caps text-label-caps">SLAB</span>
+<div class="absolute bottom-0 left-0 w-full h-1 bg-secondary-container"></div>
+</button>
+<!-- Beam -->
+<button class="flex flex-col items-center justify-center gap-2 p-3 bg-surface border border-outline-variant text-on-surface-variant hover:border-primary-container hover:text-primary-container rounded cursor-pointer transition-colors">
+<span class="material-symbols-outlined text-[24px]">view_agenda</span>
+<span class="font-label-caps text-label-caps">BEAM</span>
+</button>
+<!-- Column -->
+<button class="flex flex-col items-center justify-center gap-2 p-3 bg-surface border border-outline-variant text-on-surface-variant hover:border-primary-container hover:text-primary-container rounded cursor-pointer transition-colors">
+<span class="material-symbols-outlined text-[24px]">view_column</span>
+<span class="font-label-caps text-label-caps">COLUMN</span>
+</button>
+<!-- Footing -->
+<button class="flex flex-col items-center justify-center gap-2 p-3 bg-surface border border-outline-variant text-on-surface-variant hover:border-primary-container hover:text-primary-container rounded cursor-pointer transition-colors">
+<span class="material-symbols-outlined text-[24px]">foundation</span>
+<span class="font-label-caps text-label-caps">FOOTING</span>
+</button>
+</div>
+</div>
+<!-- Dimensions & Specifications -->
+<div class="bg-surface-lowest border border-outline-variant rounded p-4 flex flex-col gap-4">
+<div class="flex justify-between items-center border-b border-outline-variant pb-2">
+<div class="font-section-heading text-section-heading text-on-surface">Dimensions</div>
+<!-- Unit Toggle -->
+<div class="flex bg-surface-container-high rounded p-[2px]">
+<button class="px-3 py-1 bg-surface-lowest shadow-sm rounded-sm font-label-caps text-label-caps text-primary">METRIC (m)</button>
+<button class="px-3 py-1 text-on-surface-variant hover:text-primary rounded-sm font-label-caps text-label-caps">IMPERIAL (ft)</button>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<!-- Length -->
+<div class="flex flex-col gap-1">
+<label class="font-card-label text-card-label text-on-surface-variant">Length (m)</label>
+<div class="relative">
+<input class="w-full bg-surface border border-outline-variant rounded p-2 text-on-surface focus:border-primary-container focus:ring-0 focus:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] transition-all font-body text-body" type="number" value="12.5"/>
+</div>
+</div>
+<!-- Width -->
+<div class="flex flex-col gap-1">
+<label class="font-card-label text-card-label text-on-surface-variant">Width (m)</label>
+<div class="relative">
+<input class="w-full bg-surface border border-outline-variant rounded p-2 text-on-surface focus:border-primary-container focus:ring-0 focus:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] transition-all font-body text-body" type="number" value="8.0"/>
+</div>
+</div>
+<!-- Depth -->
+<div class="flex flex-col gap-1">
+<label class="font-card-label text-card-label text-on-surface-variant">Depth/Thickness (m)</label>
+<div class="relative">
+<input class="w-full bg-surface border border-outline-variant rounded p-2 text-on-surface focus:border-primary-container focus:ring-0 focus:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] transition-all font-body text-body" type="number" value="0.15"/>
+</div>
+</div>
+<!-- Quantity -->
+<div class="flex flex-col gap-1">
+<label class="font-card-label text-card-label text-on-surface-variant">Quantity</label>
+<div class="relative">
+<input class="w-full bg-surface border border-outline-variant rounded p-2 text-on-surface focus:border-primary-container focus:ring-0 focus:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] transition-all font-body text-body" type="number" value="1"/>
+</div>
+</div>
+</div>
+<!-- Concrete Mix Ratio -->
+<div class="flex flex-col gap-1 mt-2">
+<label class="font-card-label text-card-label text-on-surface-variant">Mix Ratio (Cement : Sand : Aggregate)</label>
+<select class="w-full bg-surface border border-outline-variant rounded p-2 text-on-surface focus:border-primary-container focus:ring-0 font-body text-body appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2343474d%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_8px_center] bg-[length:16px]">
+<option>1:2:4 (M15 - Standard Foundation)</option>
+<option selected="">1:1.5:3 (M20 - Slabs &amp; Beams)</option>
+<option>1:1:2 (M25 - Heavy Loads)</option>
+<option>Custom Ratio...</option>
+</select>
+</div>
+<!-- Wastage Buffer Slider -->
+<div class="flex flex-col gap-2 mt-2">
+<div class="flex justify-between items-center">
+<label class="font-card-label text-card-label text-on-surface-variant">Wastage Buffer</label>
+<span class="font-card-label text-card-label text-primary font-bold">5%</span>
+</div>
+<input class="w-full" max="15" min="0" type="range" value="5"/>
+<div class="flex justify-between text-[10px] text-outline mt-1">
+<span>0%</span>
+<span>15%</span>
+</div>
+</div>
+<button class="mt-4 w-full bg-primary-container text-on-primary font-card-label py-3 px-4 rounded hover:bg-opacity-90 transition-colors flex items-center justify-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">calculate</span> Calculate Estimate
+                        </button>
+</div>
+</div>
+<!-- Right Column (55%): Live Output -->
+<div class="w-full lg:w-[55%] flex flex-col gap-4">
+<!-- Primary Results Card -->
+<div class="bg-surface-lowest border border-outline-variant rounded p-6 shadow-sm flex flex-col h-full">
+<div class="flex justify-between items-start border-b border-outline-variant pb-4 mb-4">
+<div>
+<h2 class="font-section-heading text-section-heading text-on-surface">Estimate Results</h2>
+<p class="text-on-surface-variant text-[12px] mt-1">Based on M20 mix ratio (1:1.5:3)</p>
+</div>
+<div class="flex gap-2">
+<button class="p-2 border border-outline-variant rounded text-on-surface-variant hover:bg-surface-variant transition-colors" title="Export PDF">
+<span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+</button>
+<button class="p-2 border border-outline-variant rounded text-on-surface-variant hover:bg-surface-variant transition-colors" title="Save Estimate">
+<span class="material-symbols-outlined text-[18px]">save</span>
+</button>
+</div>
+</div>
+<!-- Headline Figures -->
+<div class="grid grid-cols-2 gap-6 mb-8">
+<div class="bg-surface p-4 rounded border border-outline-variant/50">
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">TOTAL VOLUME</div>
+<div class="text-[32px] font-page-title font-bold text-primary flex items-baseline gap-1">
+                                    15.75 <span class="text-[16px] text-on-surface-variant font-normal">m³</span>
+</div>
+<div class="text-[11px] text-outline mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">info</span> Includes 5% wastage (0.75 m³)
+                                </div>
+</div>
+<div class="bg-surface p-4 rounded border border-outline-variant/50 border-l-4 border-l-secondary-container">
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">ESTIMATED COST</div>
+<div class="text-[32px] font-page-title font-bold text-[#166534] flex items-baseline gap-1"> <!-- Hardcoded green as requested -->
+                                    $2,480 <span class="text-[16px] text-on-surface-variant font-normal">.50</span>
+</div>
+<div class="text-[11px] text-outline mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span> Current regional market rates
+                                </div>
+</div>
+</div>
+<!-- Material Breakdown -->
+<div class="font-section-heading text-section-heading text-on-surface mb-3">Material Breakdown</div>
+<div class="border border-outline-variant rounded overflow-hidden flex-1">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="py-2 px-3 font-label-caps text-label-caps text-on-surface-variant">MATERIAL</th>
+<th class="py-2 px-3 font-label-caps text-label-caps text-on-surface-variant text-right">QUANTITY</th>
+<th class="py-2 px-3 font-label-caps text-label-caps text-on-surface-variant text-right">EST. COST</th>
+</tr>
+</thead>
+<tbody class="font-body text-body text-on-surface">
+<tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-3 flex items-center gap-2">
+<div class="w-6 h-6 rounded bg-[#E5E7EB] border border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant">category</span>
+</div>
+                                            Cement (50kg bags)
+                                        </td>
+<td class="py-3 px-3 text-right font-medium">96 bags</td>
+<td class="py-3 px-3 text-right">$816.00</td>
+</tr>
+<tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-3 flex items-center gap-2">
+<div class="w-6 h-6 rounded bg-[#FDE68A] border border-[#FCD34D] flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-[#92400E]">texture</span>
+</div>
+                                            Sand / Fine Aggregate
+                                        </td>
+<td class="py-3 px-3 text-right font-medium">6.4 m³</td>
+<td class="py-3 px-3 text-right">$448.00</td>
+</tr>
+<tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-3 flex items-center gap-2">
+<div class="w-6 h-6 rounded bg-[#9CA3AF] border border-[#6B7280] flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-white">filter_vintage</span>
+</div>
+                                            Gravel / Coarse Aggregate
+                                        </td>
+<td class="py-3 px-3 text-right font-medium">12.8 m³</td>
+<td class="py-3 px-3 text-right">$896.00</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-3 flex items-center gap-2">
+<div class="w-6 h-6 rounded bg-[#BAE6FD] border border-[#7DD3FC] flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-[#0369A1]">water_drop</span>
+</div>
+                                            Water
+                                        </td>
+<td class="py-3 px-3 text-right font-medium">2,650 L</td>
+<td class="py-3 px-3 text-right">$25.50</td>
+</tr>
+</tbody>
+<tfoot>
+<tr class="bg-surface-container-low border-t border-outline-variant">
+<td class="py-2 px-3 text-right font-card-label text-card-label text-on-surface-variant" colspan="2">Labor &amp; Equipment Est.</td>
+<td class="py-2 px-3 text-right font-card-label text-card-label text-on-surface">$295.00</td>
+</tr>
+</tfoot>
+</table>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Panel: Estimate History -->
+<div class="bg-surface-lowest border border-outline-variant rounded p-4 shadow-sm w-full">
+<div class="flex justify-between items-center border-b border-outline-variant pb-3 mb-3">
+<h3 class="font-section-heading text-section-heading text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant">history</span>
+                        Recent Estimates
+                    </h3>
+<button class="text-primary hover:underline font-card-label text-card-label text-[12px]">View All</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<!-- History Item 1 -->
+<div class="border border-outline-variant rounded p-3 hover:bg-surface cursor-pointer transition-colors flex flex-col gap-2">
+<div class="flex justify-between items-start">
+<span class="font-card-label text-card-label text-on-surface">Foundation Footing B2</span>
+<span class="bg-surface-container-highest text-on-surface-variant px-2 py-0.5 rounded text-[10px] font-bold">2d ago</span>
+</div>
+<div class="flex justify-between items-end mt-1">
+<div class="text-[12px] text-on-surface-variant">
+<div class="flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">foundation</span> M15 Mix</div>
+<div>24.5 m³</div>
+</div>
+<div class="font-card-label text-card-label text-primary">$3,420.00</div>
+</div>
+</div>
+<!-- History Item 2 -->
+<div class="border border-outline-variant rounded p-3 hover:bg-surface cursor-pointer transition-colors flex flex-col gap-2">
+<div class="flex justify-between items-start">
+<span class="font-card-label text-card-label text-on-surface">Main Hall Slab</span>
+<span class="bg-surface-container-highest text-on-surface-variant px-2 py-0.5 rounded text-[10px] font-bold">5d ago</span>
+</div>
+<div class="flex justify-between items-end mt-1">
+<div class="text-[12px] text-on-surface-variant">
+<div class="flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">layers</span> M20 Mix</div>
+<div>112.0 m³</div>
+</div>
+<div class="font-card-label text-card-label text-primary">$18,500.00</div>
+</div>
+</div>
+<!-- History Item 3 -->
+<div class="border border-outline-variant rounded p-3 hover:bg-surface cursor-pointer transition-colors flex flex-col gap-2">
+<div class="flex justify-between items-start">
+<span class="font-card-label text-card-label text-on-surface">Perimeter Columns</span>
+<span class="bg-surface-container-highest text-on-surface-variant px-2 py-0.5 rounded text-[10px] font-bold">1w ago</span>
+</div>
+<div class="flex justify-between items-end mt-1">
+<div class="text-[12px] text-on-surface-variant">
+<div class="flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">view_column</span> M25 Mix</div>
+<div>8.2 m³</div>
+</div>
+<div class="font-card-label text-card-label text-primary">$1,450.00</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Simple script to update range slider value display
+        document.addEventListener('DOMContentLoaded', () => {
+            const slider = document.querySelector('input[type="range"]');
+            const display = slider.previousElementSibling.querySelector('.text-primary');
+            
+            slider.addEventListener('input', (e) => {
+                display.textContent = `${e.target.value}%`;
+            });
+        });
+    </script>
+</body></html>

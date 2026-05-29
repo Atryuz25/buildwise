@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background dark:bg-background" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Material Audit - BuildWise</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#faf9fc",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#a9caef",
+                        "tertiary-fixed": "#d1e4fe",
+                        "on-surface-variant": "#43474d",
+                        "outline-variant": "#c3c7ce",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed-variant": "#822800",
+                        "on-secondary-container": "#551700",
+                        "on-surface": "#1a1c1e",
+                        "surface-dim": "#dadadd",
+                        "on-tertiary-fixed": "#091d2f",
+                        "tertiary": "#142639",
+                        "surface-container-high": "#e8e8eb",
+                        "on-secondary-fixed": "#390c00",
+                        "on-primary-fixed-variant": "#284969",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#ffb59c",
+                        "outline": "#73777e",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f4f3f6",
+                        "tertiary-fixed-dim": "#b6c8e1",
+                        "on-primary-fixed": "#001d34",
+                        "background": "#faf9fc",
+                        "surface-container-highest": "#e3e2e5",
+                        "on-background": "#1a1c1e",
+                        "primary": "#002743",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-container": "#94a6be",
+                        "on-tertiary-fixed-variant": "#36485d",
+                        "inverse-surface": "#2f3033",
+                        "tertiary-container": "#2a3c50",
+                        "surface": "#faf9fc",
+                        "surface-container": "#eeedf0",
+                        "inverse-on-surface": "#f1f0f3",
+                        "inverse-primary": "#a9caef",
+                        "on-error": "#ffffff",
+                        "on-primary-container": "#88a8cc",
+                        "secondary-fixed": "#ffdbcf",
+                        "primary-fixed": "#cfe4ff",
+                        "surface-variant": "#e3e2e5",
+                        "secondary": "#aa3600",
+                        "primary-container": "#1a3d5c",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#fe5f1d",
+                        "surface-tint": "#416182"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "content-max-width": "1200px",
+                        "density-tight": "8px",
+                        "sidebar-width": "220px",
+                        "page-padding": "28px",
+                        "topbar-height": "56px",
+                        "gutter": "16px",
+                        "component-gap": "12px"
+                    },
+                    "fontFamily": {
+                        "page-title": ["IBM Plex Sans"],
+                        "card-label": ["IBM Plex Sans"],
+                        "label-caps": ["IBM Plex Sans"],
+                        "section-heading": ["IBM Plex Sans"],
+                        "body": ["IBM Plex Sans"]
+                    },
+                    "fontSize": {
+                        "page-title": ["20px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "card-label": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "section-heading": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "body": ["13px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for data tables */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background-color: #c3c7ce;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="font-body text-body text-on-surface h-full overflow-hidden flex">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 h-screen w-sidebar-width bg-primary dark:bg-primary-container border-r border-outline-variant flex flex-col h-full py-4 z-50">
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-8 h-8 bg-secondary rounded-DEFAULT flex items-center justify-center text-on-secondary font-bold text-lg">B</div>
+<div>
+<div class="font-page-title text-page-title font-bold text-on-primary">Project Alpha</div>
+<div class="font-body text-[11px] text-on-primary-fixed-variant opacity-80 uppercase tracking-wider">Construction Site</div>
+</div>
+</div>
+<div class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-primary-fixed-variant hover:text-on-primary hover:bg-primary-container/50 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-primary-fixed-variant hover:text-on-primary hover:bg-primary-container/50 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">architecture</span>
+<span>Projects</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-primary-fixed-variant hover:text-on-primary hover:bg-primary-container/50 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">calculate</span>
+<span>Concrete estimator</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-primary-fixed-variant hover:text-on-primary hover:bg-primary-container/50 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">precision_manufacturing</span>
+<span>Steel optimizer</span>
+</a>
+<!-- Active Tab -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT border-l-4 border-secondary bg-secondary-container/10 text-on-primary font-bold scale-[0.98] transition-all" href="#">
+<span class="material-symbols-outlined text-[20px] fill">inventory_2</span>
+<span>Material audit</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-primary-fixed-variant hover:text-on-primary hover:bg-primary-container/50 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">warehouse</span>
+<span>Inventory</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-primary-fixed-variant hover:text-on-primary hover:bg-primary-container/50 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">cloud_sync</span>
+<span>Weather risk</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-primary-fixed-variant hover:text-on-primary hover:bg-primary-container/50 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">analytics</span>
+<span>Reports</span>
+</a>
+</div>
+<div class="px-4 mt-auto space-y-4">
+<button class="w-full py-2 bg-secondary text-on-secondary rounded-DEFAULT font-card-label font-medium hover:bg-secondary-container transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                Add New Resource
+            </button>
+<div class="border-t border-primary-container pt-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-primary-fixed-variant hover:text-on-primary hover:bg-primary-container/50 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-DEFAULT text-on-primary-fixed-variant hover:text-on-primary hover:bg-primary-container/50 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">help</span>
+<span>Support</span>
+</a>
+</div>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="ml-sidebar-width flex-1 flex flex-col h-full bg-surface-container-low">
+<!-- TopNavBar -->
+<header class="h-topbar-height bg-surface-lowest dark:bg-surface-container-low border-b border-outline-variant flex justify-between items-center px-page-padding w-full shrink-0">
+<div class="font-page-title text-page-title font-bold text-primary">BuildWise</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<button class="hover:text-primary transition-colors hover:bg-surface-container p-2 rounded-full">
+<span class="material-symbols-outlined">language</span>
+</button>
+<button class="hover:text-primary transition-colors hover:bg-surface-container p-2 rounded-full relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="hover:text-primary transition-colors hover:bg-surface-container p-2 rounded-full">
+<span class="material-symbols-outlined text-[28px]">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Workspace -->
+<main class="flex-1 overflow-y-auto custom-scroll p-page-padding">
+<div class="max-w-content-max-width mx-auto flex flex-col gap-gutter h-full">
+<!-- Overdue Banner -->
+<div class="bg-error-container border border-error/20 rounded-lg p-4 flex items-start gap-3 shrink-0">
+<span class="material-symbols-outlined text-error mt-0.5">warning</span>
+<div class="flex-1">
+<h4 class="font-card-label text-error font-semibold">Audit Overdue: Sector 4 Concrete Pour</h4>
+<p class="font-body text-on-surface-variant text-sm mt-1">The scheduled material audit for Sector 4 is currently 24 hours overdue. Please submit immediately to maintain inventory compliance.</p>
+</div>
+<button class="text-error hover:bg-error/10 px-3 py-1.5 rounded-DEFAULT font-card-label text-sm transition-colors">
+                        Review Now
+                    </button>
+</div>
+<!-- Page Header -->
+<div class="flex justify-between items-end pb-2 shrink-0">
+<div>
+<h1 class="font-section-heading text-[24px] font-bold text-on-surface">Material Audit</h1>
+<p class="text-on-surface-variant text-sm mt-1">Daily reconciliation of estimated vs actual material usage.</p>
+</div>
+<div class="text-sm text-on-surface-variant flex items-center gap-2 bg-surface p-2 rounded-lg border border-outline-variant">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+                        Oct 24, 2023
+                    </div>
+</div>
+<!-- 50/50 Split Layout -->
+<div class="flex gap-gutter flex-1 min-h-[600px]">
+<!-- LEFT COLUMN: Submission Form (50%) -->
+<div class="w-1/2 bg-surface-lowest border border-outline-variant rounded-xl flex flex-col overflow-hidden">
+<div class="p-4 border-b border-outline-variant bg-surface-bright flex justify-between items-center">
+<h2 class="font-section-heading font-semibold text-primary">New Audit Submission</h2>
+<span class="bg-primary-container text-on-primary px-2 py-1 rounded-DEFAULT text-xs font-medium">Draft</span>
+</div>
+<div class="p-6 flex-1 overflow-y-auto custom-scroll">
+<form class="space-y-6">
+<!-- General Info -->
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block font-card-label text-on-surface-variant mb-1">Site Sector</label>
+<select class="w-full border-outline-variant rounded-DEFAULT text-body focus:ring-1 focus:ring-primary-container focus:border-primary-container">
+<option>Sector 1 - Foundation</option>
+<option>Sector 2 - Framing</option>
+<option selected="">Sector 4 - Concrete Pour</option>
+</select>
+</div>
+<div>
+<label class="block font-card-label text-on-surface-variant mb-1">Auditor Name</label>
+<input class="w-full bg-surface-container-low border-outline-variant rounded-DEFAULT text-body text-on-surface-variant cursor-not-allowed" disabled="" type="text" value="J. Smith (Lead Foremen)"/>
+</div>
+</div>
+<hr class="border-outline-variant"/>
+<!-- Material Line Items -->
+<div>
+<div class="flex justify-between items-end mb-3">
+<h3 class="font-card-label font-semibold text-primary">Material Reconciliation</h3>
+<button class="text-primary hover:bg-surface-container px-2 py-1 rounded-DEFAULT text-xs flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span> Add Item
+                                        </button>
+</div>
+<div class="space-y-4">
+<!-- Item 1 -->
+<div class="bg-surface border border-outline-variant rounded-lg p-4">
+<div class="flex justify-between items-center mb-3">
+<span class="font-card-label font-medium text-on-surface">Portland Cement (Type I/II)</span>
+<span class="text-xs text-on-surface-variant">Unit: Tons</span>
+</div>
+<div class="grid grid-cols-3 gap-3">
+<div>
+<label class="block text-[11px] text-on-surface-variant mb-1 uppercase tracking-wider">Estimated</label>
+<input class="w-full bg-surface-container-low border-outline-variant rounded-DEFAULT text-body text-on-surface-variant py-1.5 px-2 h-8" disabled="" type="text" value="120.0"/>
+</div>
+<div>
+<label class="block text-[11px] text-on-surface-variant mb-1 uppercase tracking-wider">Actual Used</label>
+<input class="w-full border-outline-variant rounded-DEFAULT text-body focus:ring-1 focus:ring-primary-container focus:border-primary-container py-1.5 px-2 h-8" type="number" value="125.5"/>
+</div>
+<div>
+<label class="block text-[11px] text-on-surface-variant mb-1 uppercase tracking-wider">Variance</label>
+<div class="w-full bg-error-container border border-error/30 rounded-DEFAULT text-error font-medium py-1.5 px-2 h-8 flex items-center">
+                                                        +4.58%
+                                                    </div>
+</div>
+</div>
+<div class="mt-3">
+<input class="w-full border-outline-variant rounded-DEFAULT text-body text-sm py-1.5 px-2 focus:ring-1 focus:ring-primary-container focus:border-primary-container" placeholder="Reason for variance (required if &gt; 3%)" type="text" value="Unexpected weather required thicker slump."/>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="bg-surface border border-outline-variant rounded-lg p-4">
+<div class="flex justify-between items-center mb-3">
+<span class="font-card-label font-medium text-on-surface">Rebar (#4 Grade 60)</span>
+<span class="text-xs text-on-surface-variant">Unit: Linear Ft</span>
+</div>
+<div class="grid grid-cols-3 gap-3">
+<div>
+<label class="block text-[11px] text-on-surface-variant mb-1 uppercase tracking-wider">Estimated</label>
+<input class="w-full bg-surface-container-low border-outline-variant rounded-DEFAULT text-body text-on-surface-variant py-1.5 px-2 h-8" disabled="" type="text" value="5000"/>
+</div>
+<div>
+<label class="block text-[11px] text-on-surface-variant mb-1 uppercase tracking-wider">Actual Used</label>
+<input class="w-full border-outline-variant rounded-DEFAULT text-body focus:ring-1 focus:ring-primary-container focus:border-primary-container py-1.5 px-2 h-8" type="number" value="4950"/>
+</div>
+<div>
+<label class="block text-[11px] text-on-surface-variant mb-1 uppercase tracking-wider">Variance</label>
+<div class="w-full bg-surface-container-high border border-outline-variant rounded-DEFAULT text-on-surface font-medium py-1.5 px-2 h-8 flex items-center">
+                                                        -1.00%
+                                                    </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div>
+<label class="block font-card-label text-on-surface-variant mb-1">General Audit Notes</label>
+<textarea class="w-full border-outline-variant rounded-DEFAULT text-body focus:ring-1 focus:ring-primary-container focus:border-primary-container" placeholder="Any additional observations..." rows="3"></textarea>
+</div>
+</form>
+</div>
+<div class="p-4 border-t border-outline-variant bg-surface-bright flex justify-end gap-3">
+<button class="px-4 py-2 border border-outline-variant text-on-surface rounded-DEFAULT font-card-label hover:bg-surface-container transition-colors">Save Draft</button>
+<button class="px-4 py-2 bg-primary-container text-on-primary rounded-DEFAULT font-card-label hover:bg-primary transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+                                Submit Audit
+                            </button>
+</div>
+</div>
+<!-- RIGHT COLUMN: Audit History (50%) -->
+<div class="w-1/2 bg-surface-lowest border border-outline-variant rounded-xl flex flex-col overflow-hidden">
+<div class="p-4 border-b border-outline-variant bg-surface-bright flex justify-between items-center">
+<h2 class="font-section-heading font-semibold text-primary">Recent Audit History</h2>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-2 top-1.5 text-[18px] text-outline">search</span>
+<input class="pl-8 py-1 text-sm border-outline-variant rounded-DEFAULT w-48 focus:ring-1 focus:ring-primary-container" placeholder="Search audits..." type="text"/>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto custom-scroll p-4 space-y-3">
+<!-- History Item 1 -->
+<div class="border border-outline-variant rounded-lg p-4 bg-surface hover:shadow-sm transition-shadow cursor-pointer border-l-4 border-l-secondary-container">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h4 class="font-card-label font-medium text-on-surface">Sector 3 - Steel Framing</h4>
+<p class="text-xs text-on-surface-variant mt-0.5">Submitted by A. Davis • Oct 23, 2023 16:45</p>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#fff7ed] text-[#c2410c] border border-[#ffedd5]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#f97316]"></span>
+                                        Warning
+                                    </span>
+</div>
+<div class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-outline-variant/50 text-sm">
+<div>
+<span class="text-on-surface-variant text-xs block">Items Audited</span>
+<span class="font-medium">12</span>
+</div>
+<div>
+<span class="text-on-surface-variant text-xs block">High Variance</span>
+<span class="font-medium text-secondary-container">2 Items (&gt;5%)</span>
+</div>
+<div class="text-right">
+<button class="text-primary hover:underline text-xs font-medium">View Details</button>
+</div>
+</div>
+</div>
+<!-- History Item 2 -->
+<div class="border border-outline-variant rounded-lg p-4 bg-surface hover:shadow-sm transition-shadow cursor-pointer border-l-4 border-l-[#16a34a]">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h4 class="font-card-label font-medium text-on-surface">Sector 1 - Foundation Final</h4>
+<p class="text-xs text-on-surface-variant mt-0.5">Submitted by J. Smith • Oct 22, 2023 17:10</p>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#f0fdf4] text-[#15803d] border border-[#dcfce7]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#22c55e]"></span>
+                                        Healthy
+                                    </span>
+</div>
+<div class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-outline-variant/50 text-sm">
+<div>
+<span class="text-on-surface-variant text-xs block">Items Audited</span>
+<span class="font-medium">8</span>
+</div>
+<div>
+<span class="text-on-surface-variant text-xs block">Net Variance</span>
+<span class="font-medium text-[#16a34a]">-0.5%</span>
+</div>
+<div class="text-right">
+<button class="text-primary hover:underline text-xs font-medium">View Details</button>
+</div>
+</div>
+</div>
+<!-- History Item 3 -->
+<div class="border border-outline-variant rounded-lg p-4 bg-surface hover:shadow-sm transition-shadow cursor-pointer border-l-4 border-l-[#16a34a]">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h4 class="font-card-label font-medium text-on-surface">Sector 2 - Decking</h4>
+<p class="text-xs text-on-surface-variant mt-0.5">Submitted by M. Chen • Oct 21, 2023 15:30</p>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#f0fdf4] text-[#15803d] border border-[#dcfce7]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#22c55e]"></span>
+                                        Healthy
+                                    </span>
+</div>
+<div class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-outline-variant/50 text-sm">
+<div>
+<span class="text-on-surface-variant text-xs block">Items Audited</span>
+<span class="font-medium">15</span>
+</div>
+<div>
+<span class="text-on-surface-variant text-xs block">Net Variance</span>
+<span class="font-medium">+1.2%</span>
+</div>
+<div class="text-right">
+<button class="text-primary hover:underline text-xs font-medium">View Details</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
