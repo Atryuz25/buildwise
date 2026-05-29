@@ -124,4 +124,25 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// PUT edit contractor
+router.put('/:id', async (req, res) => {
+  try {
+    const { name, trade, phone, bankDetails, status } = req.body;
+    let updateData: any = { name, trade, phone, status };
+    
+    if (bankDetails) {
+      updateData.bankDetails = encrypt(bankDetails);
+    }
+
+    const contractor = await prisma.contractor.update({
+      where: { id: req.params.id },
+      data: updateData
+    });
+
+    res.json({ success: true, contractor });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

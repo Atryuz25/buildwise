@@ -2,25 +2,34 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '../../shared/components/ToastContext';
 import { apiClient } from '../../api/apiClient';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { ContractorModal, CrewModal } from './ContractorModals';
 
 export const ContractorsManagementPage: React.FC = () => {
   const { showToast } = useToast();
+  
+  const [isAddContractorOpen, setIsAddContractorOpen] = useState(false);
+  const [isEditContractorOpen, setIsEditContractorOpen] = useState(false);
+  const [isAddCrewOpen, setIsAddCrewOpen] = useState(false);
+  
   const [selectedContractorId, setSelectedContractorId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'Profile' | 'Crews' | 'Performance' | 'Payment'>('Profile');
   const [contractors, setContractors] = useState<any[]>([]);
   const [selectedContractorData, setSelectedContractorData] = useState<any>(null);
   const [milestones, setMilestones] = useState<any[]>([]);
 
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
-      try {
-        const data = await apiClient.get('/contractors/leaderboard');
-        setContractors(data);
-        if (data.length > 0) setSelectedContractorId(data[0].id);
-      } catch (e) {
-        showToast('Failed to load contractors', 'error');
+  const fetchLeaderboard = async () => {
+    try {
+      const data = await apiClient.get('/contractors/leaderboard');
+      setContractors(data);
+      if (data.length > 0 && !selectedContractorId) {
+        setSelectedContractorId(data[0].id);
       }
-    };
+    } catch (e) {
+      showToast('Failed to load contractors', 'error');
+    }
+  };
+
+  useEffect(() => {
     fetchLeaderboard();
   }, [showToast]);
 
@@ -36,16 +45,17 @@ export const ContractorsManagementPage: React.FC = () => {
     fetchMilestones();
   }, []);
 
+  const fetchDetail = async () => {
+    if (!selectedContractorId) return;
+    try {
+      const data = await apiClient.get(`/contractors/${selectedContractorId}`);
+      setSelectedContractorData(data);
+    } catch(e) {
+      // ignore
+    }
+  };
+
   useEffect(() => {
-    const fetchDetail = async () => {
-      if (!selectedContractorId) return;
-      try {
-        const data = await apiClient.get(`/contractors/${selectedContractorId}`);
-        setSelectedContractorData(data);
-      } catch(e) {
-        // ...
-      }
-    };
     fetchDetail();
   }, [selectedContractorId]);
 
@@ -70,7 +80,7 @@ export const ContractorsManagementPage: React.FC = () => {
           <h1 className="font-section-heading text-[24px] font-bold text-on-surface">Contractors Management</h1>
           <p className="text-on-surface-variant text-sm mt-1">Manage contractor profiles, crew assignments, and track portfolio performance.</p>
         </div>
-        <button onClick={() => showToast('Add Contractor Dialog Opened', 'info')} className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded font-bold hover:opacity-90 transition-opacity">
+        <button onClick={() => setIsAddContractorOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded font-bold hover:opacity-90 transition-opacity">
           <span className="material-symbols-outlined text-[18px]">add</span> Add Contractor
         </button>
       </div>
@@ -123,7 +133,7 @@ export const ContractorsManagementPage: React.FC = () => {
                     <h2 className="text-2xl font-page-title font-bold text-primary mb-1">{selectedContractor.name}</h2>
                     <div className="text-sm text-on-surface-variant">Partner since {selectedContractor.since}</div>
                   </div>
-                  <button onClick={() => showToast('Edit Contractor Dialog', 'info')} className="px-3 py-1.5 border border-outline-variant rounded bg-surface text-sm font-bold text-primary hover:bg-surface-variant flex items-center gap-1">
+                  <button onClick={() => setIsEditContractorOpen(true)} className="px-3 py-1.5 border border-outline-variant rounded bg-surface text-sm font-bold text-primary hover:bg-surface-variant flex items-center gap-1">
                     <span className="material-symbols-outlined text-[16px]">edit</span> Edit
                   </button>
                 </div>
@@ -199,7 +209,7 @@ export const ContractorsManagementPage: React.FC = () => {
                   <div>
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="font-section-heading font-bold text-primary text-sm">Crews assigned to Project Alpha</h3>
-                      <button onClick={() => showToast('Add Crew Dialog Opened', 'info')} className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
+                      <button onClick={() => setIsAddCrewOpen(true)} className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
                         <span className="material-symbols-outlined text-[16px]">add</span> Add Crew
                       </button>
                     </div>
@@ -353,6 +363,25 @@ export const ContractorsManagementPage: React.FC = () => {
         </div>
 
       </div>
+      </div>
+      
+      <ContractorModal 
+        isOpen={isAddContractorOpen} 
+        onClose={() => setIsAddContractorOpen(false)} 
+        onSuccess={fetchLeaderboard}
+      />
+      <ContractorModal 
+        isOpen={isEditContractorOpen} 
+        onClose={() => setIsEditContractorOpen(false)} 
+        onSuccess={() => { fetchLeaderboard(); fetchDetail(); }}
+        contractorData={selectedContractorData}
+      />
+      <CrewModal 
+        isOpen={isAddCrewOpen}
+        onClose={() => setIsAddCrewOpen(false)}
+        onSuccess={fetchDetail}
+        contractorId={selectedContractorId || ''}
+      />
     </div>
   );
 };

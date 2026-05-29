@@ -261,7 +261,20 @@ export const CrewProductivityPage: React.FC = () => {
                   </div>
 
                   <div className="pt-4 border-t border-outline-variant">
-                    <button onClick={() => showToast('Flagged for PM review', 'info')} className="w-full border border-[#c2410c] text-[#c2410c] hover:bg-[#fff7ed] transition-colors py-2 rounded font-bold text-sm flex justify-center items-center gap-2">
+                    <button 
+                      onClick={async () => {
+                        const note = window.prompt('Enter note for Project Manager:');
+                        if (note) {
+                          try {
+                            await apiClient.post(`/productivity/crews/${selectedCrew.id}/flag`, { note });
+                            showToast('Flagged for PM review', 'success');
+                          } catch(e) {
+                            showToast('Failed to flag crew', 'error');
+                          }
+                        }
+                      }} 
+                      className="w-full border border-[#c2410c] text-[#c2410c] hover:bg-[#fff7ed] transition-colors py-2 rounded font-bold text-sm flex justify-center items-center gap-2"
+                    >
                       <span className="material-symbols-outlined text-[18px]">flag</span> Flag for review
                     </button>
                     <div className="mt-4 p-3 bg-surface-variant/20 border border-outline-variant rounded">

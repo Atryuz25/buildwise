@@ -9,6 +9,9 @@ export const InventoryPage: React.FC = () => {
   
   const [materials, setMaterials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
+  const [adjustmentAmount, setAdjustmentAmount] = useState('');
+  const [adjustmentReason, setAdjustmentReason] = useState('');
 
   // Hardcode a projectId for demo since we don't have project selection yet
   const projectId = 'Project Alpha'; // In real app, this comes from context or route
@@ -156,13 +159,95 @@ export const InventoryPage: React.FC = () => {
             </div>
 
             <div className="mt-4 pt-4 border-t border-outline-variant shrink-0">
-              <button onClick={() => showToast(`Opening manual adjustment for ${selectedMaterial}`, 'info')} className="w-full bg-primary-container text-on-primary py-3 rounded font-bold hover:opacity-90 transition-colors flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-[18px]">add_box</span> Log Manual Adjustment
+              <button onClick={() => setIsAdjustmentModalOpen(true)} className="w-full bg-primary-container text-on-primary py-3 rounded font-bold hover:opacity-90 transition-colors flex items-center justify-center gap-2">
+                <span className="material-symbols-outlined text-[18px]">edit_note</span> Log Manual Adjustment
               </button>
             </div>
           </div>
         )}
       </div>
+
+      {/* Manual Adjustment Modal */}
+      {isAdjustmentModalOpen && selectedMaterial && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center backdrop-blur-sm">
+          <div className="bg-surface-lowest rounded-lg border border-outline-variant w-[400px] overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-variant/30">
+              <h2 className="font-section-heading font-bold text-primary">Manual Stock Adjustment</h2>
+              <button onClick={() => setIsAdjustmentModalOpen(false)} className="text-on-surface-variant hover:text-primary transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="p-6 flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Material</label>
+                <div className="text-sm font-bold text-primary">{selectedMaterial.name} ({selectedMaterial.unit})</div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Current Stock</label>
+                <div className="text-sm text-on-surface">{selectedMaterial.currentStock} {selectedMaterial.unit}</div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Adjustment Amount (can be negative) *</label>
+                <input 
+                  required
+                  type="number"
+                  value={adjustmentAmount}
+                  onChange={e => setAdjustmentAmount(e.target.value)}
+                  className="w-full border border-outline-variant rounded p-2 text-sm focus:border-primary-container bg-surface" 
+                  placeholder="e.g. -50 or 20"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Reason *</label>
+                <input 
+                  required
+                  type="text"
+                  value={adjustmentReason}
+                  onChange={e => setAdjustmentReason(e.target.value)}
+                  className="w-full border border-outline-variant rounded p-2 text-sm focus:border-primary-container bg-surface" 
+                  placeholder="e.g. Spoilage, recount, etc."
+                />
+              </div>
+              
+              <div className="mt-4 flex gap-3 justify-end">
+                <button type="button" onClick={() => setIsAdjustmentModalOpen(false)} className="px-4 py-2 border border-outline-variant rounded font-bold hover:bg-surface-variant transition-colors text-on-surface-variant text-sm">
+                  Cancel
+                </button>
+                <button 
+                  onClick={async () => {
+                    const amt = Number(adjustmentAmount);
+                    if (isNaN(amt) || !adjustmentReason) {
+                      showToast('Please enter a valid amount and reason', 'error');
+                      return;
+                    }
+                    try {
+                      // Adjust stock
+                      await api.materials.logDelivery(selectedMaterial.id, amt, 'INV-ADJUST');
+                      showToast(`Successfully adjusted stock by ${amt} ${selectedMaterial.unit}`, 'success');
+                      setIsAdjustmentModalOpen(false);
+                      setAdjustmentAmount('');
+                      setAdjustmentReason('');
+                      
+                      // Refresh
+                      const projs = await api.projects.getAll();
+                      if (projs.length > 0) {
+                        const inv = await api.materials.getInventory(projs[0].id);
+                        setMaterials(inv);
+                        setSelectedMaterial(inv.find((m: any) => m.id === selectedMaterial.id) || null);
+                      }
+                    } catch(e) {
+                      showToast('Failed to adjust stock', 'error');
+                    }
+                  }} 
+                  className="px-4 py-2 bg-primary text-on-primary rounded font-bold hover:opacity-90 transition-opacity text-sm disabled:opacity-50"
+                >
+                  Confirm Adjustment
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

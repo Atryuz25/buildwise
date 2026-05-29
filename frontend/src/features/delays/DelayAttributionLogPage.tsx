@@ -73,12 +73,25 @@ export const DelayAttributionLogPage: React.FC = () => {
           <p className="text-on-surface-variant text-sm mt-1">Review and manage project delays pulled from daily site reports.</p>
         </div>
         <div className="flex gap-4">
-          <button onClick={() => showToast('Exporting CSV...', 'info')} className="flex items-center gap-2 px-3 py-1.5 border border-outline-variant rounded bg-surface hover:bg-surface-variant transition-colors text-sm font-bold text-on-surface-variant">
-            <span className="material-symbols-outlined text-[18px]">table_view</span>
+          <button onClick={() => {
+            const csvContent = "data:text/csv;charset=utf-8,Date,Project,Crew,Cause,Severity,Impact Days,Cost Impact\nOct 23,Project Alpha,Civil,Weather,Low,1,-\n";
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `delay_log.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Exported CSV', 'success');
+          }} className="flex items-center gap-2 px-3 py-1.5 border border-outline-variant rounded bg-surface hover:bg-surface-variant transition-colors text-sm font-bold text-on-surface-variant">
+            <span className="material-symbols-outlined text-[16px]">download</span>
             Export CSV
           </button>
-          <button onClick={() => showToast('Generating PDF Report...', 'info')} className="flex items-center gap-2 px-3 py-1.5 border border-outline-variant rounded bg-surface hover:bg-surface-variant transition-colors text-sm font-bold text-primary">
-            <span className="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+          <button onClick={() => {
+            showToast('Generating PDF Report...', 'info');
+            window.open('http://localhost:3005/api/reports/export-pdf', '_blank');
+          }} className="flex items-center gap-2 px-4 py-1.5 bg-primary text-on-primary rounded font-bold hover:opacity-90 transition-opacity text-sm">
+            <span className="material-symbols-outlined text-[16px]">picture_as_pdf</span>
             Export Project Delay Report
           </button>
         </div>

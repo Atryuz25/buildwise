@@ -33,7 +33,7 @@ export const ConcreteEstimatorPage: React.FC = () => {
 
   const handleExportPDF = () => {
     showToast('Generating Estimate PDF...', 'info');
-    setTimeout(() => window.print(), 500);
+    window.open('http://localhost:3005/api/reports/export-pdf', '_blank');
   };
 
   // Convert to meters if input is in feet (1 ft = 0.3048 m)

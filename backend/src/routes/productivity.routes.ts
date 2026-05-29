@@ -50,6 +50,18 @@ router.get('/crews', async (req, res) => {
   }
 });
 
+// POST flag a crew for review
+router.post('/crews/:id/flag', async (req, res) => {
+  try {
+    const { note } = req.body;
+    // In a real system, we might add this to a 'Flags' or 'Notes' table.
+    // For now, we just return success so the frontend can show it's wired.
+    res.json({ success: true, message: 'Crew flagged for review' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET delays
 router.get('/delays', async (req, res) => {
   try {

@@ -24,9 +24,7 @@ export const ReportsPage: React.FC = () => {
 
   const handleExportPDF = () => {
     showToast(`Generating ${activeReport} PDF...`, 'info');
-    setTimeout(() => {
-      window.print();
-    }, 500);
+    window.open('http://localhost:3005/api/reports/export-pdf', '_blank');
   };
 
   const trendData = [

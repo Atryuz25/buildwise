@@ -54,16 +54,13 @@ export const Layout: React.FC = () => {
       {/* SideNavBar */}
       <nav className="print:hidden bg-primary dark:bg-primary-container w-sidebar-width flex-shrink-0 border-r border-outline-variant flex flex-col h-full py-4 z-50">
         <div className="px-6 mb-8 flex flex-col gap-1">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3 mt-2">
             <div className="w-8 h-8 bg-on-primary rounded flex items-center justify-center text-primary font-bold">BW</div>
             <div>
               <div className="font-page-title text-page-title font-bold text-on-primary leading-tight">Project Alpha</div>
               <div className="text-on-primary-fixed-variant text-[11px]">Construction Site</div>
             </div>
           </div>
-          <button onClick={() => showToast('Add Resource coming soon.', 'info')} className="mt-4 w-full bg-secondary-container text-on-secondary-container font-card-label py-2 px-4 rounded hover:bg-opacity-90 transition-colors flex items-center justify-center gap-2">
-            <span className="material-symbols-outlined text-[16px]">add</span> Add Resource
-          </button>
         </div>
         
         <div className="flex-1 overflow-y-auto flex flex-col gap-1 custom-scroll">
@@ -105,15 +102,10 @@ export const Layout: React.FC = () => {
           })}
         </div>
 
-        <div className="mt-auto flex flex-col gap-1 border-t border-primary-fixed-variant pt-4">
-          <button onClick={() => showToast('Settings coming soon.', 'info')} className="w-full flex items-center gap-3 px-6 py-2.5 text-primary-fixed-dim hover:text-on-primary hover:bg-primary-container/50 transition-colors group">
-            <span className="material-symbols-outlined text-[20px]">settings</span>
-            <span className="font-card-label">Settings</span>
-          </button>
-          <button onClick={() => showToast('Support coming soon.', 'info')} className="w-full flex items-center gap-3 px-6 py-2.5 text-primary-fixed-dim hover:text-on-primary hover:bg-primary-container/50 transition-colors group">
-            <span className="material-symbols-outlined text-[20px]">help</span>
-            <span className="font-card-label">Support</span>
-          </button>
+        <div className="mt-auto flex flex-col gap-1 border-t border-primary-fixed-variant pt-4 pb-4">
+          <div className="px-6 text-xs text-on-primary/50 font-bold">
+            BuildWise v1.0.0
+          </div>
         </div>
       </nav>
 
@@ -129,14 +121,43 @@ export const Layout: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            <button onClick={() => showToast('Language selection coming soon', 'info')} className="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded hover:bg-surface-variant">
-              <span className="material-symbols-outlined text-[20px]">language</span>
-            </button>
-            <button onClick={() => showToast('No new notifications', 'info')} className="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded hover:bg-surface-variant relative">
-              <span className="material-symbols-outlined text-[20px]">notifications</span>
-              <span className="absolute top-1 right-1 w-2 h-2 bg-secondary-container rounded-full"></span>
-            </button>
-            <button onClick={() => { localStorage.removeItem('userRole'); navigate('/login'); }} className="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded hover:bg-surface-variant">
+            <div className="relative group">
+              <button className="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded hover:bg-surface-variant relative">
+                <span className="material-symbols-outlined text-[20px]">notifications</span>
+                <span className="absolute top-1 right-1 w-2 h-2 bg-secondary-container rounded-full"></span>
+              </button>
+              
+              {/* Simple Notifications Dropdown */}
+              <div className="absolute right-0 mt-2 w-72 bg-surface-lowest border border-outline-variant shadow-lg rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                <div className="p-3 border-b border-outline-variant flex justify-between items-center bg-surface-variant/20">
+                  <span className="font-bold text-sm text-primary">Recent Alerts</span>
+                  <span className="text-[10px] bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded">1 New</span>
+                </div>
+                <div className="flex flex-col max-h-[300px] overflow-y-auto">
+                  <div className="p-3 border-b border-outline-variant/50 hover:bg-surface-variant/30 cursor-pointer flex gap-3">
+                    <span className="material-symbols-outlined text-error text-[20px] mt-0.5">warning</span>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm font-bold">High Delay Alert</span>
+                      <span className="text-xs text-on-surface-variant">Weather delay of 8 hours reported by contractor.</span>
+                      <span className="text-[10px] text-on-surface-variant/70">10 mins ago</span>
+                    </div>
+                  </div>
+                  <div className="p-3 border-b border-outline-variant/50 hover:bg-surface-variant/30 cursor-pointer flex gap-3 opacity-70">
+                    <span className="material-symbols-outlined text-[#166534] text-[20px] mt-0.5">check_circle</span>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm font-bold">Estimate Approved</span>
+                      <span className="text-xs text-on-surface-variant">Concrete M20 estimate #4521 approved.</span>
+                      <span className="text-[10px] text-on-surface-variant/70">2 hours ago</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-2 text-center text-xs font-bold text-primary hover:underline cursor-pointer bg-surface-variant/10 rounded-b-lg">
+                  View All Activity
+                </div>
+              </div>
+            </div>
+
+            <button onClick={() => { localStorage.removeItem('userRole'); navigate('/login'); }} className="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded hover:bg-surface-variant" title="Logout">
               <span className="material-symbols-outlined text-[20px]">logout</span>
             </button>
           </div>

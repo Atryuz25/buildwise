@@ -19,6 +19,7 @@ import { useAIHeadcount } from "./useAIHeadcount";
 export const AttendanceTrackerPage: React.FC = () => {
   const { showToast } = useToast();
   const { analyzeImage, isAnalyzing, result } = useAIHeadcount();
+  const userRole = localStorage.getItem('userRole') || 'project_manager';
   const today = new Date().toISOString().split("T")[0];
   const [selectedDate, setSelectedDate] = useState(today);
 
@@ -220,7 +221,7 @@ export const AttendanceTrackerPage: React.FC = () => {
                     year: "numeric",
                   })}
                 </span>
-                {isToday && (
+                {isToday && ['admin', 'project_manager'].includes(userRole) && (
                   <button
                     onClick={() =>
                       analyzeImage(new File([], "site_photo.jpg"), totalActual)
