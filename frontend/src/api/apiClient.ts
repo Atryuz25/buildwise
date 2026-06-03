@@ -72,5 +72,10 @@ export const apiClient = {
   async delete(endpoint: string) {
     const res = await axiosInstance.delete(endpoint);
     return res.data;
+  },
+
+  async patch(endpoint: string, data?: any) {
+    const res = await axiosInstance.patch(endpoint, data);
+    return res.data;
   }
 };

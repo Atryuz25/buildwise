@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../../shared/components/ToastContext';
 import { apiClient } from '../../api/apiClient';
+import { useAuth } from '../../shared/hooks/useAuth';
 
 export const ConcreteEstimatorPage: React.FC = () => {
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const activeProjectId = user?.projectIds?.[0];
   const [structure, setStructure] = useState('Slab');
   const [buffer, setBuffer] = useState(5);
   const [unit, setUnit] = useState('Metres');
@@ -20,16 +23,16 @@ export const ConcreteEstimatorPage: React.FC = () => {
   useEffect(() => {
     // Load history
     const loadHistory = async () => {
+      if (!activeProjectId) return;
       try {
-        const projectId = localStorage.getItem('projectId') || 'demo-project';
-        const data = await apiClient.get(`/estimates/concrete?projectId=${projectId}`);
-        setHistory(data);
+        const data = await apiClient.get(`/projects/${activeProjectId}/estimates?type=concrete`);
+        setHistory(data || []);
       } catch (err) {
         console.error('Failed to load history', err);
       }
     };
     loadHistory();
-  }, []);
+  }, [activeProjectId]);
 
   const handleExportPDF = () => {
     showToast('Generating Estimate PDF...', 'info');
@@ -58,14 +61,15 @@ export const ConcreteEstimatorPage: React.FC = () => {
   const totalCost = cementCost + sandCost + aggCost;
 
   const handleSaveEstimate = async () => {
+    if (!activeProjectId) {
+      showToast('No active project found', 'error');
+      return;
+    }
     setIsSaving(true);
     try {
-      const projectId = localStorage.getItem('projectId') || 'demo-project';
-      const engineerId = localStorage.getItem('userId') || 'demo-user';
-      
       const payload = {
-        projectId,
-        engineerId,
+        projectId: activeProjectId,
+        engineerId: user?.id || 'demo-user',
         structure,
         grade: grade.split(' ')[0], // M20
         volume: baseVolume,
@@ -73,7 +77,7 @@ export const ConcreteEstimatorPage: React.FC = () => {
         currentRates: { cement: 420, sand: 70, aggregate: 70 }
       };
 
-      const res = await apiClient.post('/estimates/concrete', payload);
+      const res = await apiClient.post(`/projects/${activeProjectId}/estimates`, { ...payload, type: 'concrete' });
       
       if (res.success) {
         showToast('Estimate saved to project BOQ', 'success');

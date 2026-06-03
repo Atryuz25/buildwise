@@ -119,7 +119,7 @@ export const LabourCostAnalysisPage: React.FC = () => {
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                       <XAxis dataKey="week" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
                       <YAxis tickFormatter={formatRupees} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
-                      <Tooltip formatter={(value: number) => `₹${value.toLocaleString()}`} cursor={{fill: '#f1f5f9'}} />
+                      <Tooltip formatter={(value: any) => `₹${value.toLocaleString()}`} cursor={{fill: '#f1f5f9'}} />
                       <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
                       <Bar dataKey="Civil Team A" stackId="a" fill="#0ea5e9" maxBarSize={50} />
                       <Bar dataKey="Steel Fixers" stackId="a" fill="#8b5cf6" maxBarSize={50} />
@@ -203,7 +203,7 @@ export const LabourCostAnalysisPage: React.FC = () => {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => `₹${value.toLocaleString()}`} />
+                    <Tooltip formatter={(value: any) => `₹${value.toLocaleString()}`} />
                     <Legend verticalAlign="bottom" height={36} iconType="circle" />
                   </PieChart>
                 </ResponsiveContainer>

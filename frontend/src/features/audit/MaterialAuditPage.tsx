@@ -1,13 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../shared/components/ToastContext';
+import { apiClient } from '../../api/apiClient';
+import { useAuth } from '../../shared/hooks/useAuth';
 
 export const MaterialAuditPage: React.FC = () => {
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const activeProjectId = user?.projectIds?.[0];
+
   const [actCement, setActCement] = useState(110);
   const estCement = 100;
   
   const [actSteel, setActSteel] = useState(1010);
   const estSteel = 1000;
+
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [activity, setActivity] = useState('');
+  const [weather, setWeather] = useState('Clear');
+  const [siteNotes, setSiteNotes] = useState('');
+  const [history, setHistory] = useState<any[]>([]);
+  const [inventory, setInventory] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!activeProjectId) return;
+    const fetchData = async () => {
+      try {
+        const [audits, inv] = await Promise.all([
+          apiClient.get(`/projects/${activeProjectId}/audits`),
+          apiClient.get(`/projects/${activeProjectId}/inventory`)
+        ]);
+        setHistory(audits);
+        setInventory(inv);
+      } catch (err) {
+        console.error('Failed to fetch audit data', err);
+      }
+    };
+    fetchData();
+  }, [activeProjectId]);
 
   const calcVariance = (act: number, est: number) => {
     if (est === 0) return 0;
@@ -59,11 +88,11 @@ export const MaterialAuditPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
               <label className="block text-sm font-bold text-on-surface-variant mb-1">Date</label>
-              <input type="date" defaultValue={new Date().toISOString().split('T')[0]} className="w-full border-outline-variant rounded p-2 focus:border-primary-container" />
+              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full border-outline-variant rounded p-2 focus:border-primary-container" />
             </div>
             <div>
               <label className="block text-sm font-bold text-on-surface-variant mb-1">Activity</label>
-              <input type="text" placeholder="e.g. Column pour - Tower B" className="w-full border-outline-variant rounded p-2 focus:border-primary-container" />
+              <input type="text" value={activity} onChange={(e) => setActivity(e.target.value)} placeholder="e.g. Column pour - Tower B" className="w-full border-outline-variant rounded p-2 focus:border-primary-container" />
             </div>
           </div>
 
@@ -109,22 +138,56 @@ export const MaterialAuditPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-outline-variant">
               <div>
                 <label className="block text-sm font-bold text-on-surface-variant mb-1">Weather Condition</label>
-                <select className="w-full border-outline-variant rounded p-2 focus:border-primary-container">
+                <select value={weather} onChange={e => setWeather(e.target.value)} className="w-full border-outline-variant rounded p-2 focus:border-primary-container">
                   <option>Clear</option><option>Cloudy</option><option>Light rain</option><option>Heavy rain</option>
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-bold text-on-surface-variant mb-1">Site Notes (Optional)</label>
-                <textarea className="w-full border-outline-variant rounded p-2 focus:border-primary-container h-10" placeholder="Any issues..." />
+                <textarea value={siteNotes} onChange={e => setSiteNotes(e.target.value)} className="w-full border-outline-variant rounded p-2 focus:border-primary-container h-10" placeholder="Any issues..." />
               </div>
             </div>
           </div>
 
           <div className="mt-6 shrink-0 pt-4 border-t border-outline-variant flex justify-end">
-            <button onClick={() => {
-              setActCement(estCement);
-              setActSteel(estSteel);
-              showToast('Audit submitted successfully', 'success');
+            <button onClick={async () => {
+              if (!activeProjectId) {
+                showToast('No active project found', 'error');
+                return;
+              }
+              try {
+                // Find IDs for cement and steel from inventory
+                const cement = inventory.find((m: any) => m.name.toLowerCase().includes('cement'));
+                const steel = inventory.find((m: any) => m.name.toLowerCase().includes('steel'));
+
+                if (!cement || !steel) {
+                  showToast('Inventory materials missing from DB', 'error');
+                  return;
+                }
+
+                const payload = {
+                  date,
+                  activity: activity || 'General Work',
+                  weather,
+                  siteNotes,
+                  items: [
+                    { materialId: cement.id, estimatedQty: estCement, actualUsed: actCement },
+                    { materialId: steel.id, estimatedQty: estSteel, actualUsed: actSteel }
+                  ]
+                };
+
+                const res = await apiClient.post(`/projects/${activeProjectId}/audits`, payload);
+                if (res.success) {
+                  setHistory([res.audit, ...history]);
+                  showToast('Audit submitted successfully', 'success');
+                  setActCement(estCement);
+                  setActSteel(estSteel);
+                  setActivity('');
+                  setSiteNotes('');
+                }
+              } catch (err: any) {
+                showToast(err.response?.data?.error || 'Failed to submit audit', 'error');
+              }
             }} className="bg-primary-container text-on-primary px-8 py-3 rounded font-bold hover:opacity-90 transition-colors w-full">
               Submit Audit
             </button>
@@ -144,9 +207,20 @@ export const MaterialAuditPage: React.FC = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto space-y-3">
-            <AuditHistoryCard date="Oct 24, 2023" activity="Slab Pour - Sector 4" variance="14.5%" isRisk={true} engineer="Raj Patel" />
-            <AuditHistoryCard date="Oct 23, 2023" activity="Column Reinforcement" variance="2.1%" isRisk={false} engineer="Raj Patel" />
-            <AuditHistoryCard date="Oct 22, 2023" activity="Foundation Block A" variance="4.5%" isRisk={false} engineer="Amit Singh" />
+            {history.length === 0 ? (
+              <div className="text-sm text-on-surface-variant p-4">No audits found for this project.</div>
+            ) : (
+              history.map((audit: any) => (
+                <AuditHistoryCard 
+                  key={audit.id}
+                  date={new Date(audit.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  activity={audit.activity || 'General Works'}
+                  variance={`${Math.abs(audit.overallRisk === 'Healthy' ? 2 : 12)}%`}
+                  isRisk={audit.overallRisk !== 'Healthy'}
+                  engineer={audit.engineer?.name || 'Project Manager'} 
+                />
+              ))
+            )}
           </div>
         </div>
       </div>

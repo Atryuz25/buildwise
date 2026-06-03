@@ -4,7 +4,7 @@ import { useAuth } from '../../shared/hooks/useAuth';
 import { apiClient } from '../../api/apiClient';
 
 interface Milestone {
-  id: number;
+  id: string | number;
   contractor: string;
   trade: string;
   name: string;
@@ -19,6 +19,11 @@ interface Milestone {
 export const PaymentMilestoneTracker: React.FC = () => {
   const { showToast } = useToast();
   const [isAddPanelOpen, setIsAddPanelOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newAmount, setNewAmount] = useState('');
+  const [newDate, setNewDate] = useState('');
+  const [newContractor, setNewContractor] = useState('BuildTech Solutions');
+
   const [milestones, setMilestones] = useState<Milestone[]>([
     { id: 1, contractor: 'BuildTech Solutions', trade: 'Civil', name: 'Slab 4 Completion', amount: 450000, dueDate: 'Oct 30, 2023', status: 'upcoming', daysRemaining: 6 },
     { id: 2, contractor: 'IronWorks Ltd', trade: 'Steel', name: 'Tower B Level 2 Steel', amount: 280000, dueDate: 'Nov 15, 2023', status: 'upcoming', daysRemaining: 22 },
@@ -75,7 +80,7 @@ export const PaymentMilestoneTracker: React.FC = () => {
     fetchMilestones();
   }, [projectId]);
 
-  const handleMarkPaid = async (id: number) => {
+  const handleMarkPaid = async (id: string | number) => {
     try {
       await apiClient.patch(`/milestones/${id}/status`, { status: 'PAID' });
       setMilestones(prev => prev.map(m => m.id === id ? { ...m, status: 'paid', paidDate: new Date().toISOString() } : m));
@@ -85,7 +90,7 @@ export const PaymentMilestoneTracker: React.FC = () => {
     }
   };
 
-  const handleUndoPaid = async (id: number) => {
+  const handleUndoPaid = async (id: string | number) => {
     try {
       await apiClient.put(`/milestones/${id}/unpay`);
       setMilestones(prev => prev.map(m => {
@@ -101,20 +106,40 @@ export const PaymentMilestoneTracker: React.FC = () => {
     }
   };
 
-  const handleAddMilestone = () => {
-    const newMilestone: Milestone = {
-      id: Date.now(),
-      contractor: 'BuildTech Solutions',
-      trade: 'Civil',
-      name: 'New Custom Milestone',
-      amount: 100000,
-      dueDate: 'Nov 30, 2023',
-      status: 'upcoming',
-      daysRemaining: 30
-    };
-    setMilestones(prev => [...prev, newMilestone]);
-    setIsAddPanelOpen(false);
-    showToast('Milestone Added', 'success');
+  const handleAddMilestone = async () => {
+    if (!newTitle || !newAmount || !newDate || !projectId) {
+      showToast('Please fill all required fields', 'error');
+      return;
+    }
+    try {
+      const res = await apiClient.post('/milestones', {
+        projectId,
+        title: newTitle,
+        amount: Number(newAmount),
+        dueDate: newDate
+      });
+      if (res.success) {
+        const m = res.milestone;
+        const newMilestone: Milestone = {
+          id: m.id,
+          contractor: newContractor,
+          trade: 'Civil',
+          name: m.title,
+          amount: m.amount,
+          dueDate: m.dueDate,
+          status: 'upcoming',
+          daysRemaining: 30
+        };
+        setMilestones(prev => [...prev, newMilestone]);
+        setIsAddPanelOpen(false);
+        setNewTitle('');
+        setNewAmount('');
+        setNewDate('');
+        showToast('Milestone Added', 'success');
+      }
+    } catch (err: any) {
+      showToast('Failed to add milestone', 'error');
+    }
   };
 
   const handleWhatsApp = (contractor: string, amount: number) => {
@@ -285,34 +310,35 @@ export const PaymentMilestoneTracker: React.FC = () => {
 
       {/* Add Milestone Slide-in Panel */}
       {isAddPanelOpen && (
-        <div className="absolute top-0 right-0 bottom-0 w-[380px] bg-surface-lowest border-l border-outline-variant shadow-2xl flex flex-col z-20 animate-in slide-in-from-right">
-          <div className="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-variant/10">
-            <h2 className="font-section-heading font-bold text-primary">Add New Milestone</h2>
-            <button onClick={() => setIsAddPanelOpen(false)} className="text-on-surface-variant hover:text-primary transition-colors">
-              <span className="material-symbols-outlined">close</span>
-            </button>
-          </div>
-          <div className="flex-1 p-6 overflow-y-auto space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-on-surface-variant mb-1">Contractor</label>
-              <select className="w-full border-outline-variant rounded p-2 focus:border-primary-container text-sm">
-                <option>BuildTech Solutions</option>
-                <option>IronWorks Ltd</option>
-                <option>Volt Experts</option>
-              </select>
+        <div className="fixed inset-0 bg-black/50 z-[100] backdrop-blur-sm">
+          <div className="absolute top-0 right-0 bottom-0 w-[380px] bg-surface-lowest border-l border-outline-variant shadow-2xl flex flex-col z-20 animate-in slide-in-from-right">
+            <div className="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-variant/10">
+              <h2 className="font-section-heading font-bold text-primary">Add New Milestone</h2>
+              <button onClick={() => setIsAddPanelOpen(false)} className="text-on-surface-variant hover:text-primary transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-on-surface-variant mb-1">Milestone Name</label>
-              <input type="text" placeholder="e.g. Slab completion Tower B" className="w-full border-outline-variant rounded p-2 focus:border-primary-container text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-on-surface-variant mb-1">Amount (₹)</label>
-              <input type="number" placeholder="e.g. 500000" className="w-full border-outline-variant rounded p-2 focus:border-primary-container text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-on-surface-variant mb-1">Due Date</label>
-              <input type="date" className="w-full border-outline-variant rounded p-2 focus:border-primary-container text-sm" />
-            </div>
+            <div className="flex-1 p-6 overflow-y-auto space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant mb-1">Contractor</label>
+                <select value={newContractor} onChange={e => setNewContractor(e.target.value)} className="w-full border-outline-variant rounded p-2 focus:border-primary-container text-sm">
+                  <option>BuildTech Solutions</option>
+                  <option>IronWorks Ltd</option>
+                  <option>Volt Experts</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant mb-1">Milestone Name</label>
+                <input value={newTitle} onChange={e => setNewTitle(e.target.value)} type="text" placeholder="e.g. Slab completion Tower B" className="w-full border-outline-variant rounded p-2 focus:border-primary-container text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant mb-1">Amount (₹)</label>
+                <input value={newAmount} onChange={e => setNewAmount(e.target.value)} type="number" placeholder="e.g. 500000" className="w-full border-outline-variant rounded p-2 focus:border-primary-container text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant mb-1">Due Date</label>
+                <input value={newDate} onChange={e => setNewDate(e.target.value)} type="date" className="w-full border-outline-variant rounded p-2 focus:border-primary-container text-sm" />
+              </div>
             <div>
               <label className="block text-xs font-bold text-on-surface-variant mb-1">Linked Activity (Optional)</label>
               <select className="w-full border-outline-variant rounded p-2 focus:border-primary-container text-sm">
@@ -324,14 +350,15 @@ export const PaymentMilestoneTracker: React.FC = () => {
               <label className="block text-xs font-bold text-on-surface-variant mb-1">Notes</label>
               <textarea rows={3} className="w-full border-outline-variant rounded p-2 focus:border-primary-container text-sm"></textarea>
             </div>
-          </div>
-          <div className="p-4 border-t border-outline-variant bg-surface-variant/10">
-            <button 
-              onClick={handleAddMilestone} 
-              className="w-full bg-primary text-on-primary font-bold py-2.5 rounded shadow hover:opacity-90 transition-opacity"
-            >
-              Save Milestone
-            </button>
+            </div>
+            <div className="p-4 border-t border-outline-variant bg-surface-variant/10">
+              <button 
+                onClick={handleAddMilestone} 
+                className="w-full bg-primary text-on-primary font-bold py-2.5 rounded shadow hover:opacity-90 transition-opacity"
+              >
+                Save Milestone
+              </button>
+            </div>
           </div>
         </div>
       )}

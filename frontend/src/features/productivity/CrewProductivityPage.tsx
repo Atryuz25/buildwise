@@ -195,7 +195,7 @@ export const CrewProductivityPage: React.FC = () => {
                           <Tooltip cursor={{fill: '#f1f5f9'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                           <ReferenceLine y={100} stroke="#94a3b8" strokeDasharray="3 3" label={{ position: 'insideTopLeft', value: 'Target', fill: '#64748b', fontSize: 12 }} />
                           <Bar dataKey="actual" radius={[4, 4, 0, 0]} maxBarSize={40}>
-                             {dailyData.map((entry, index) => (
+                             {dailyData.map((entry: any, index: any) => (
                               <Cell key={`cell-${index}`} fill={entry.actual < entry.target * 0.8 ? '#b91c1c' : '#0f172a'} />
                             ))}
                           </Bar>

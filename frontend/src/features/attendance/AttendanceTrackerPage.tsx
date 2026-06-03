@@ -222,18 +222,31 @@ export const AttendanceTrackerPage: React.FC = () => {
                   })}
                 </span>
                 {isToday && ['admin', 'project_manager'].includes(userRole) && (
-                  <button
-                    onClick={() =>
-                      analyzeImage(new File([], "site_photo.jpg"), totalActual)
-                    }
-                    disabled={isAnalyzing}
-                    className="flex items-center gap-1.5 bg-[#f8fafc] border border-outline-variant hover:border-primary-container px-3 py-1 rounded text-xs font-bold text-primary transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">
-                      smart_toy
-                    </span>
-                    {isAnalyzing ? "Analyzing..." : "AI Verify Headcount"}
-                  </button>
+                  <div className="flex gap-2 items-center">
+                    <label className="flex items-center gap-1.5 bg-surface-variant/20 border border-outline-variant hover:border-primary-container px-3 py-1 rounded text-xs font-bold text-on-surface-variant transition-colors cursor-pointer">
+                      <span className="material-symbols-outlined text-[16px]">add_a_photo</span>
+                      Upload Site Photo
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            showToast('Photo uploaded for verification', 'success');
+                            analyzeImage(e.target.files[0], totalActual);
+                          }
+                        }} 
+                      />
+                    </label>
+                    <button
+                      onClick={() => analyzeImage(new File([], "site_photo.jpg"), totalActual)}
+                      disabled={isAnalyzing}
+                      className="flex items-center gap-1.5 bg-[#f8fafc] border border-outline-variant hover:border-primary-container px-3 py-1 rounded text-xs font-bold text-primary transition-colors disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">smart_toy</span>
+                      {isAnalyzing ? "Analyzing..." : "AI Verify"}
+                    </button>
+                  </div>
                 )}
               </h2>
               <div className="flex gap-2">
