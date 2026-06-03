@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDailyReportSync } from './useDailyReportSync';
 import { useToast } from '../../shared/components/ToastContext';
 
 export const DailySiteReportPage: React.FC = () => {
-  const { syncToAuditStore } = useDailyReportSync();
+  const { syncToAuditStore, autoSaveDraft } = useDailyReportSync();
   const { showToast } = useToast();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [draftId, setDraftId] = useState<string | undefined>(undefined);
   const [activeSections, setActiveSections] = useState({
     work: true,
     materials: true,
@@ -39,12 +40,64 @@ export const DailySiteReportPage: React.FC = () => {
 
   const completedSectionsCount = Object.values(activeSections).filter(Boolean).length; // Just a dummy metric for the "progress indicator" for now
 
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      const payload = {
+        id: draftId,
+        date: new Date().toISOString().split('T')[0],
+        projectId: '294b2977-35cb-491f-9244-e9d983523101', // seeded project
+        engineerId: '5bc1708a-3627-475d-88cb-bdc5e116ffbd', // seeded user
+        activities: activities.map(a => ({
+          name: a.name,
+          location: a.location,
+          status: a.status,
+          expectedPct: a.expectedPct,
+          actualPct: a.actualPct
+        })),
+        materials: materials.map(m => ({ 
+          materialId: 'a06fa80c-ba61-4933-9543-2f9de5b3327e', // seeded material for testing 
+          expected: m.expected, 
+          actual: m.actual, 
+          unit: 'bags' 
+        })),
+        crews: crews.map(c => ({
+          crewId: '5ba19552-4c05-4698-95d8-9305538a8cbe', // seeded crew for testing
+          actual: c.actual,
+          actualOutput: String(c.actualOutput)
+        })),
+        issues: issues.map(i => ({
+          type: i.type,
+          severity: i.severity,
+          desc: i.desc
+        })),
+        isDelayed,
+        delayCause: 'Weather', // mocked for now
+        delayHours: 4 // mocked for now
+      };
+
+      const newDraftId = await autoSaveDraft(payload);
+      if (newDraftId) {
+        setDraftId(newDraftId);
+      }
+    }, 2000); // Debounce saves by 2 seconds
+    
+    return () => clearTimeout(timer);
+  }, [activities, materials, crews, issues, isDelayed, autoSaveDraft, draftId]);
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     const success = await syncToAuditStore({
+      id: draftId,
       date: new Date().toISOString().split('T')[0],
       projectId: '294b2977-35cb-491f-9244-e9d983523101', // seeded project
       engineerId: '5bc1708a-3627-475d-88cb-bdc5e116ffbd', // seeded user
+      activities: activities.map(a => ({
+        name: a.name,
+        location: a.location,
+        status: a.status,
+        expectedPct: a.expectedPct,
+        actualPct: a.actualPct
+      })),
       materials: materials.map(m => ({ 
         materialId: 'a06fa80c-ba61-4933-9543-2f9de5b3327e', // seeded material for testing 
         expected: m.expected, 

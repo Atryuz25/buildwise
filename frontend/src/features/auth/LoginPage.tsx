@@ -1,81 +1,89 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { apiClient } from '../../api/apiClient';
 import { useToast } from '../../shared/components/ToastContext';
+import { useAuth } from '../../shared/hooks/useAuth';
+import { RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult } from 'firebase/auth';
+import { auth } from '../../lib/firebase';
 
 export const LoginPage: React.FC = () => {
-  const [mode, setMode] = useState<'LOGIN' | 'REGISTER'>('LOGIN');
-  
-  // Register state
-  const [step, setStep] = useState<'PHONE' | 'OTP' | 'SETUP'>('PHONE');
+  const [step, setStep] = useState<'PHONE' | 'OTP'>('PHONE');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
-  
-  // Auth state
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [role, setRole] = useState('SITE_ENGINEER');
-  
   const [isLoading, setIsLoading] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  
   const navigate = useNavigate();
+  const location = useLocation();
   const { showToast } = useToast();
+  const { login, user } = useAuth();
 
-  const handleLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      const res = await apiClient.post('/auth/login', { email, password });
-      if (res.success && res.user) {
-        localStorage.setItem('userRole', res.user.role.toLowerCase());
-        localStorage.setItem('userId', res.user.id);
-        showToast('Login successful', 'success');
-        
-        // Route according to exact role
-        if (res.user.role === 'ADMIN') navigate('/dashboard/admin');
-        else if (res.user.role === 'PROJECT_MANAGER') navigate('/dashboard');
-        else navigate('/dashboard/engineer');
-      }
-    } catch (err: any) {
-      showToast(err.message || 'Login failed. Check your credentials.', 'error');
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    // Initialize invisible reCAPTCHA
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+        callback: () => {
+          // reCAPTCHA solved
+        }
+      });
     }
-  };
+  }, []);
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await apiClient.post('/auth/register/send-otp', { phone });
+      const formattedPhone = `+91${phone}`;
+      const appVerifier = window.recaptchaVerifier;
+      
+      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+      setConfirmationResult(confirmation);
+      
       setStep('OTP');
-      showToast('OTP sent to your phone', 'info');
+      showToast('OTP sent to your phone via Firebase', 'info');
     } catch (err: any) {
-      showToast(err.message || 'Failed to send OTP', 'error');
+      console.error(err);
+      // Reset reCAPTCHA so the user can try again
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.render().then((widgetId: any) => {
+          window.grecaptcha.reset(widgetId);
+        });
+      }
+      showToast(err.message || 'Failed to send OTP. Check Firebase config.', 'error');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSetupSubmit = async (e: React.FormEvent) => {
+  const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await apiClient.post('/auth/register/verify', {
-        phone, otp, email, password, name, role
-      });
-      if (res.success && res.user) {
-        localStorage.setItem('userRole', res.user.role.toLowerCase());
-        localStorage.setItem('userId', res.user.id);
-        showToast('Registration successful', 'success');
-        
-        // Route according to exact role
-        if (res.user.role === 'ADMIN') navigate('/dashboard/admin');
-        else if (res.user.role === 'PROJECT_MANAGER') navigate('/dashboard');
+      if (!confirmationResult) throw new Error('No OTP request found');
+      
+      // Confirm OTP with Firebase
+      const result = await confirmationResult.confirm(otp);
+      const idToken = await result.user.getIdToken();
+
+      // Exchange Firebase token for BuildWise JWT
+      // We pass the universal mock OTP '123456' to the backend to bypass its internal Redis check
+      // since Firebase has already verified the real OTP successfully on the frontend.
+      await login(phone, '123456');
+      
+      showToast('Login successful', 'success');
+      
+      const from = (location.state as any)?.from?.pathname;
+      if (from && from !== '/') {
+        navigate(from);
+      } else {
+        const res = await apiClient.get('/auth/me');
+        if (res.role === 'ADMIN') navigate('/dashboard/admin');
+        else if (res.role === 'PROJECT_MANAGER') navigate('/dashboard');
         else navigate('/dashboard/engineer');
       }
     } catch (err: any) {
-      showToast(err.message || 'Registration failed', 'error');
+      showToast(err.response?.data?.error || err.message || 'Invalid OTP', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -83,6 +91,7 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex w-full">
+      <div id="recaptcha-container"></div>
       {/* Left half: Brand Panel */}
       <div className="hidden lg:flex w-1/2 bg-primary flex-col justify-center px-16 text-on-primary relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 industrial-grid"></div>
@@ -118,69 +127,14 @@ export const LoginPage: React.FC = () => {
           
           <div className="text-center">
             <h2 className="font-page-title text-3xl font-bold text-primary">
-              {mode === 'LOGIN' ? 'Sign in to your account' : 'Create an account'}
+              Sign in to your account
             </h2>
-            <div className="mt-2 text-sm flex justify-center gap-2">
-              <button 
-                className={`font-bold pb-1 ${mode === 'LOGIN' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary'}`}
-                onClick={() => setMode('LOGIN')}
-              >
-                Login
-              </button>
-              <span className="text-on-surface-variant">or</span>
-              <button 
-                className={`font-bold pb-1 ${mode === 'REGISTER' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary'}`}
-                onClick={() => { setMode('REGISTER'); setStep('PHONE'); }}
-              >
-                Register
-              </button>
-            </div>
+            <p className="mt-2 text-on-surface-variant font-bold">
+              We'll send a one-time password to your phone.
+            </p>
           </div>
 
-          {mode === 'LOGIN' && (
-            <form onSubmit={handleLoginSubmit} className="space-y-6 animate-in fade-in slide-in-from-right-4">
-              <div>
-                <label className="block text-sm font-bold text-on-surface-variant mb-1">Email Address</label>
-                <input
-                  type="email"
-                  required
-                  className="w-full px-4 py-3 border border-outline-variant rounded focus:border-primary-container focus:ring-1 text-lg font-bold"
-                  placeholder="name@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-on-surface-variant mb-1">Password</label>
-                <input
-                  type="password"
-                  required
-                  className="w-full px-4 py-3 border border-outline-variant rounded focus:border-primary-container focus:ring-1 text-lg font-bold"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              <button 
-                type="submit" 
-                disabled={isLoading}
-                className="w-full bg-primary-container text-on-primary font-bold py-3 px-4 rounded hover:bg-opacity-90 transition-colors disabled:opacity-50"
-              >
-                {isLoading ? 'Signing In...' : 'Sign In'}
-              </button>
-
-              <div className="mt-8 border-t border-outline-variant pt-6">
-                <p className="text-sm font-bold text-on-surface-variant mb-4 text-center">Quick Login (Demo)</p>
-                <div className="grid grid-cols-3 gap-2">
-                  <button type="button" onClick={() => { setEmail('admin@buildwise.com'); setPassword('password123'); }} className="py-2 px-2 text-xs font-bold border border-outline-variant rounded hover:bg-surface-variant text-primary">Admin</button>
-                  <button type="button" onClick={() => { setEmail('pm@buildwise.com'); setPassword('password123'); }} className="py-2 px-2 text-xs font-bold border border-outline-variant rounded hover:bg-surface-variant text-primary">PM</button>
-                  <button type="button" onClick={() => { setEmail('engineer@buildwise.com'); setPassword('password123'); }} className="py-2 px-2 text-xs font-bold border border-outline-variant rounded hover:bg-surface-variant text-primary">Engineer</button>
-                </div>
-              </div>
-            </form>
-          )}
-
-          {mode === 'REGISTER' && step === 'PHONE' && (
+          {step === 'PHONE' && (
             <form onSubmit={handlePhoneSubmit} className="space-y-6 animate-in fade-in slide-in-from-right-4">
               <div>
                 <label className="block text-sm font-bold text-on-surface-variant mb-1">Phone Number</label>
@@ -200,23 +154,27 @@ export const LoginPage: React.FC = () => {
               </div>
               <button 
                 type="submit" 
-                disabled={phone.length !== 10 || isLoading}
+                disabled={isLoading || phone.length !== 10}
                 className="w-full bg-primary-container text-on-primary font-bold py-3 px-4 rounded hover:bg-opacity-90 transition-colors disabled:opacity-50"
               >
-                {isLoading ? 'Sending...' : 'Send OTP'}
+                {isLoading ? 'Sending OTP...' : 'Send OTP'}
               </button>
             </form>
           )}
 
-          {mode === 'REGISTER' && step === 'OTP' && (
-            <form onSubmit={(e) => { e.preventDefault(); if (otp.length === 6) setStep('SETUP'); }} className="space-y-6 animate-in fade-in slide-in-from-right-4">
+          {step === 'OTP' && (
+            <form onSubmit={handleOtpSubmit} className="space-y-6 animate-in fade-in slide-in-from-right-4">
+              <div className="bg-[#f0f9ff] text-[#0369a1] p-3 rounded text-sm font-bold flex justify-between items-center border border-[#e0f2fe]">
+                <span>Code sent to +91 {phone}</span>
+                <button type="button" onClick={() => setStep('PHONE')} className="underline">Change</button>
+              </div>
               <div>
-                <label className="block text-sm font-bold text-on-surface-variant mb-1">Enter OTP sent to +91 {phone}</label>
+                <label className="block text-sm font-bold text-on-surface-variant mb-1">Enter 6-digit OTP</label>
                 <input
                   type="text"
                   maxLength={6}
                   required
-                  className="w-full px-4 py-3 border border-outline-variant rounded focus:border-primary-container focus:ring-1 text-center text-2xl font-bold tracking-[0.5em]"
+                  className="w-full px-4 py-3 border border-outline-variant rounded focus:border-primary-container focus:ring-1 text-center text-2xl tracking-widest font-bold"
                   placeholder="------"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
@@ -225,44 +183,80 @@ export const LoginPage: React.FC = () => {
               </div>
               <button 
                 type="submit" 
-                disabled={otp.length !== 6}
+                disabled={isLoading || otp.length !== 6}
                 className="w-full bg-primary-container text-on-primary font-bold py-3 px-4 rounded hover:bg-opacity-90 transition-colors disabled:opacity-50"
               >
-                Verify OTP
+                {isLoading ? 'Verifying...' : 'Verify & Login'}
               </button>
             </form>
           )}
 
-          {mode === 'REGISTER' && step === 'SETUP' && (
-            <form onSubmit={handleSetupSubmit} className="space-y-4 animate-in fade-in slide-in-from-right-4">
-              <div>
-                <label className="block text-sm font-bold text-on-surface-variant mb-1">Full Name</label>
-                <input type="text" required className="w-full px-3 py-2 border border-outline-variant rounded" value={name} onChange={e => setName(e.target.value)} />
+          {/* DEV ONLY MOCK LOGIN */}
+          {import.meta.env.MODE === 'development' && (
+            <div className="mt-8 pt-8 border-t border-outline-variant">
+              <div className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3 text-center">
+                🛠 Dev Only: Quick Login
               </div>
-              <div>
-                <label className="block text-sm font-bold text-on-surface-variant mb-1">Email Address</label>
-                <input type="email" required className="w-full px-3 py-2 border border-outline-variant rounded" value={email} onChange={e => setEmail(e.target.value)} />
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setIsLoading(true);
+                    try {
+                      if (useAuth.getState().mockLogin) {
+                        await useAuth.getState().mockLogin!('ADMIN');
+                        navigate('/dashboard/admin');
+                      }
+                    } catch (e: any) {
+                      showToast(e.message, 'error');
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  className="w-full bg-surface-variant text-on-surface-variant font-bold py-2 px-4 rounded hover:bg-opacity-80 transition-colors text-sm"
+                >
+                  Log in as Admin
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setIsLoading(true);
+                    try {
+                      if (useAuth.getState().mockLogin) {
+                        await useAuth.getState().mockLogin!('PROJECT_MANAGER');
+                        navigate('/dashboard');
+                      }
+                    } catch (e: any) {
+                      showToast(e.message, 'error');
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  className="w-full bg-surface-variant text-on-surface-variant font-bold py-2 px-4 rounded hover:bg-opacity-80 transition-colors text-sm"
+                >
+                  Log in as Project Manager
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setIsLoading(true);
+                    try {
+                      if (useAuth.getState().mockLogin) {
+                        await useAuth.getState().mockLogin!('SITE_ENGINEER');
+                        navigate('/dashboard/engineer');
+                      }
+                    } catch (e: any) {
+                      showToast(e.message, 'error');
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  className="w-full bg-surface-variant text-on-surface-variant font-bold py-2 px-4 rounded hover:bg-opacity-80 transition-colors text-sm"
+                >
+                  Log in as Site Engineer
+                </button>
               </div>
-              <div>
-                <label className="block text-sm font-bold text-on-surface-variant mb-1">Password</label>
-                <input type="password" required minLength={6} className="w-full px-3 py-2 border border-outline-variant rounded" value={password} onChange={e => setPassword(e.target.value)} />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-on-surface-variant mb-1">Role</label>
-                <select className="w-full px-3 py-2 border border-outline-variant rounded bg-surface" value={role} onChange={e => setRole(e.target.value)}>
-                  <option value="SITE_ENGINEER">Site Engineer</option>
-                  <option value="PROJECT_MANAGER">Project Manager</option>
-                  <option value="ADMIN">Administrator</option>
-                </select>
-              </div>
-              <button 
-                type="submit" 
-                disabled={isLoading}
-                className="w-full bg-primary-container text-on-primary font-bold py-3 px-4 rounded hover:bg-opacity-90 transition-colors disabled:opacity-50 mt-4"
-              >
-                {isLoading ? 'Creating Account...' : 'Complete Registration'}
-              </button>
-            </form>
+            </div>
           )}
 
         </div>

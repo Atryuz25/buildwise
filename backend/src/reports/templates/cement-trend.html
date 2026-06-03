@@ -1,0 +1,28 @@
+<h2>Cement Usage vs Estimates</h2>
+<p>Total Variance: <span class="metric {{#isNegative}}negative{{/isNegative}}">{{totalVariancePercent}}%</span></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Activity</th>
+      <th>Estimated (bags)</th>
+      <th>Actual (bags)</th>
+      <th>Variance</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#items}}
+    <tr>
+      <td>{{date}}</td>
+      <td>{{activity}}</td>
+      <td>{{estimated}}</td>
+      <td>{{actual}}</td>
+      <td class="{{#isHigh}}negative{{/isHigh}}">{{variance}}%</td>
+    </tr>
+    {{/items}}
+    {{^items}}
+    <tr><td colspan="5" style="text-align: center;">No cement records found.</td></tr>
+    {{/items}}
+  </tbody>
+</table>

@@ -1,0 +1,26 @@
+<h2>Inventory Consumption</h2>
+<p>Focus Material: <strong>{{materialName}}</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Type</th>
+      <th>Quantity</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#items}}
+    <tr>
+      <td>{{date}}</td>
+      <td>{{type}}</td>
+      <td>{{quantity}}</td>
+      <td>{{notes}}</td>
+    </tr>
+    {{/items}}
+    {{^items}}
+    <tr><td colspan="4" style="text-align: center;">No inventory logs found.</td></tr>
+    {{/items}}
+  </tbody>
+</table>

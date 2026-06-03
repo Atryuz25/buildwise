@@ -74,6 +74,7 @@ export const ContractorsManagementPage: React.FC = () => {
   ];
 
   return (
+    <>
     <div className="p-page-padding w-full h-full flex flex-col gap-6 overflow-hidden">
       <div className="flex justify-between items-end pb-2 shrink-0 border-b border-outline-variant">
         <div>
@@ -382,6 +383,6 @@ export const ContractorsManagementPage: React.FC = () => {
         onSuccess={fetchDetail}
         contractorId={selectedContractorId || ''}
       />
-    </div>
+    </>
   );
 };

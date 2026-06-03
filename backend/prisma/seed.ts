@@ -3,143 +3,78 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Seeding database...');
+  console.log('Seeding MaterialRates...');
 
-  // 1. Create 3 mock users for demo
-  const adminUser = await prisma.user.upsert({
-    where: { phone: '9876543210' },
-    update: { email: 'admin@buildwise.com', password: 'password123' },
-    create: {
-      phone: '9876543210',
-      email: 'admin@buildwise.com',
-      password: 'password123',
-      name: 'Admin User',
-      role: 'ADMIN',
-    },
-  });
+  const masterRates = [
+    { city: 'Hyderabad', material: 'cement', ratePerUnit: 380, unit: 'bag' },
+    { city: 'Hyderabad', material: 'steel', ratePerUnit: 58, unit: 'kg' },
+    { city: 'Hyderabad', material: 'sand', ratePerUnit: 45, unit: 'cft' },
+    { city: 'Hyderabad', material: 'aggregate', ratePerUnit: 38, unit: 'cft' },
 
-  const pmUser = await prisma.user.upsert({
-    where: { phone: '9876543211' },
-    update: { email: 'pm@buildwise.com', password: 'password123' },
-    create: {
-      phone: '9876543211',
-      email: 'pm@buildwise.com',
-      password: 'password123',
-      name: 'Project Manager',
-      role: 'PROJECT_MANAGER',
-    },
-  });
+    { city: 'Mumbai', material: 'cement', ratePerUnit: 410, unit: 'bag' },
+    { city: 'Mumbai', material: 'steel', ratePerUnit: 60, unit: 'kg' },
+    { city: 'Mumbai', material: 'sand', ratePerUnit: 55, unit: 'cft' },
+    { city: 'Mumbai', material: 'aggregate', ratePerUnit: 42, unit: 'cft' },
 
-  const engineerUser = await prisma.user.upsert({
-    where: { phone: '9876543212' },
-    update: { email: 'engineer@buildwise.com', password: 'password123' },
-    create: {
-      phone: '9876543212',
-      email: 'engineer@buildwise.com',
-      password: 'password123',
-      name: 'Site Engineer',
-      role: 'SITE_ENGINEER',
-    },
-  });
+    { city: 'Pune', material: 'cement', ratePerUnit: 400, unit: 'bag' },
+    { city: 'Pune', material: 'steel', ratePerUnit: 59, unit: 'kg' },
+    { city: 'Pune', material: 'sand', ratePerUnit: 50, unit: 'cft' },
+    { city: 'Pune', material: 'aggregate', ratePerUnit: 40, unit: 'cft' },
 
-  // 2. Create Projects
-  const project1 = await prisma.project.create({
-    data: {
-      name: 'Project Alpha',
-      location: 'Mumbai, MH',
-      type: 'Residential',
-      budget: 15000000,
-      spent: 4500000,
-      startDate: new Date(),
-      status: 'Active',
-      members: {
-        create: {
-          userId: adminUser.id,
-          role: 'ADMIN',
-        }
-      }
-    }
-  });
+    { city: 'Bangalore', material: 'cement', ratePerUnit: 420, unit: 'bag' },
+    { city: 'Bangalore', material: 'steel', ratePerUnit: 62, unit: 'kg' },
+    { city: 'Bangalore', material: 'sand', ratePerUnit: 58, unit: 'cft' },
+    { city: 'Bangalore', material: 'aggregate', ratePerUnit: 45, unit: 'cft' },
 
-  const project2 = await prisma.project.create({
-    data: {
-      name: 'Horizon Towers',
-      location: 'Pune, MH',
-      type: 'Commercial',
-      budget: 85000000,
-      spent: 82000000,
-      startDate: new Date(),
-      status: 'At Risk',
-      members: {
-        create: {
-          userId: adminUser.id,
-          role: 'ADMIN',
-        }
-      }
-    }
-  });
+    { city: 'Chennai', material: 'cement', ratePerUnit: 390, unit: 'bag' },
+    { city: 'Chennai', material: 'steel', ratePerUnit: 57, unit: 'kg' },
+    { city: 'Chennai', material: 'sand', ratePerUnit: 48, unit: 'cft' },
+    { city: 'Chennai', material: 'aggregate', ratePerUnit: 41, unit: 'cft' },
 
-  const project3 = await prisma.project.create({
-    data: {
-      name: 'Sector 5 Clinic',
-      location: 'Bangalore, KA',
-      type: 'Infrastructure',
-      budget: 12000000,
-      spent: 1200000,
-      startDate: new Date(),
-      status: 'Active',
-    }
-  });
+    { city: 'Delhi', material: 'cement', ratePerUnit: 375, unit: 'bag' },
+    { city: 'Delhi', material: 'steel', ratePerUnit: 56, unit: 'kg' },
+    { city: 'Delhi', material: 'sand', ratePerUnit: 40, unit: 'cft' },
+    { city: 'Delhi', material: 'aggregate', ratePerUnit: 36, unit: 'cft' },
+  ];
 
-  // 3. Create Materials for Project 1
-  await prisma.material.createMany({
-    data: [
-      {
-        projectId: project1.id,
-        name: 'Cement (50kg)',
-        unit: 'bags',
-        currentStock: 450,
-        minThreshold: 500,
-        burnRate7Day: 110,
-        ratePerUnit: 420,
-      },
-      {
-        projectId: project1.id,
-        name: 'Steel 12mm',
-        unit: 'tons',
-        currentStock: 5.2,
-        minThreshold: 1.0,
-        burnRate7Day: 0.8,
-        ratePerUnit: 65000,
-      },
-      {
-        projectId: project1.id,
-        name: 'River Sand',
-        unit: 'cft',
-        currentStock: 400,
-        minThreshold: 500,
-        burnRate7Day: 200,
-        ratePerUnit: 70,
-      }
-    ]
-  });
-
-  // Add an audit
-  const audit = await prisma.materialAudit.create({
-    data: {
-      projectId: project1.id,
-      engineerId: adminUser.id,
-      activity: 'Slab Pour',
-      weather: 'Clear',
-      overallRisk: 'Healthy',
-    }
-  });
-
-  console.log('Seeding finished.');
+  for (const rate of masterRates) {
+    // We group by city in MaterialRate table (schema: city @unique, cement, steel, sand, aggregate)
+    // Wait, the schema for MaterialRate is:
+    // id, city @unique, cement Float, steel Float, sand Float, aggregate Float, updatedAt
+    // We shouldn't use an array of objects per material, we should just upsert by city!
+  }
 }
 
-main()
-  .catch((e) => {
+async function runSeeder() {
+  const citiesData = [
+    { city: 'Hyderabad', cement: 380, steel: 58, sand: 45, aggregate: 38 },
+    { city: 'Mumbai', cement: 410, steel: 60, sand: 55, aggregate: 42 },
+    { city: 'Pune', cement: 400, steel: 59, sand: 50, aggregate: 40 },
+    { city: 'Bangalore', cement: 420, steel: 62, sand: 58, aggregate: 45 },
+    { city: 'Chennai', cement: 390, steel: 57, sand: 48, aggregate: 41 },
+    { city: 'Delhi', cement: 375, steel: 56, sand: 40, aggregate: 36 }
+  ];
+
+  console.log('Seeding MaterialRates...');
+
+  for (const data of citiesData) {
+    await prisma.materialRate.upsert({
+      where: { city: data.city },
+      update: {
+        cement: data.cement,
+        steel: data.steel,
+        sand: data.sand,
+        aggregate: data.aggregate
+      },
+      create: data
+    });
+  }
+
+  console.log('Seeding complete.');
+}
+
+runSeeder()
+  .catch(e => {
     console.error(e);
     process.exit(1);
   })

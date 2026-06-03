@@ -430,6 +430,35 @@ export const AttendanceTrackerPage: React.FC = () => {
                 </ResponsiveContainer>
               </div>
             </div>
+            <div className="bg-surface-lowest border border-outline-variant rounded p-4 flex-1 flex flex-col">
+              <h3 className="font-section-heading font-bold text-primary mb-4 text-sm">
+                Day vs Avg Absence Pattern
+              </h3>
+              <div className="flex-1 overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-outline-variant text-on-surface-variant font-bold text-xs uppercase tracking-wider">
+                      <th className="pb-2">Day</th>
+                      <th className="pb-2 text-right">Avg Absence</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-outline-variant/50">
+                      <td className="py-2">Monday</td>
+                      <td className="py-2 text-right">5%</td>
+                    </tr>
+                    <tr className="border-b border-outline-variant/50 bg-[#fff7ed]">
+                      <td className="py-2 text-[#c2410c] font-bold">Friday</td>
+                      <td className="py-2 text-right text-[#c2410c] font-bold">12%</td>
+                    </tr>
+                    <tr className="border-b border-outline-variant/50 bg-error-container">
+                      <td className="py-2 text-error font-bold">Saturday</td>
+                      <td className="py-2 text-right text-error font-bold">18%</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>

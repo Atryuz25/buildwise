@@ -1,24 +1,27 @@
 import crypto from 'crypto';
+import { env } from '../env';
 
-// Use a 32-byte key for AES-256
-// In production, this should be an environment variable. Using a fixed string for demo/development.
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '12345678901234567890123456789012'; // Must be 32 characters
+const ALGORITHM = 'aes-256-cbc';
+const ENCRYPTION_KEY = Buffer.from(env.ENCRYPTION_KEY, 'utf-8'); // Must be 32 bytes
 const IV_LENGTH = 16; // For AES, this is always 16
 
 export function encrypt(text: string): string {
   const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
-  let encrypted = cipher.update(text);
-  encrypted = Buffer.concat([encrypted, cipher.final()]);
-  return iv.toString('hex') + ':' + encrypted.toString('hex');
+  const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
+  let encrypted = cipher.update(text, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  return `${iv.toString('hex')}:${encrypted}`;
 }
 
 export function decrypt(text: string): string {
   const textParts = text.split(':');
-  const iv = Buffer.from(textParts.shift()!, 'hex');
+  const ivPart = textParts.shift();
+  if (!ivPart) throw new Error('Invalid encrypted format');
+  
+  const iv = Buffer.from(ivPart, 'hex');
   const encryptedText = Buffer.from(textParts.join(':'), 'hex');
-  const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
+  const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
   let decrypted = decipher.update(encryptedText);
   decrypted = Buffer.concat([decrypted, decipher.final()]);
-  return decrypted.toString();
+  return decrypted.toString('utf8');
 }

@@ -49,11 +49,44 @@ router.post('/', async (req, res) => {
 router.patch('/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
+    const data: any = { status };
+    if (status === 'PAID') {
+      data.paidDate = new Date();
+    }
     const milestone = await prisma.paymentMilestone.update({
       where: { id: req.params.id },
-      data: { status }
+      data
     });
     res.json({ success: true, milestone });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT unpay milestone (24h window)
+router.put('/:id/unpay', async (req, res) => {
+  try {
+    const milestone = await prisma.paymentMilestone.findUnique({
+      where: { id: req.params.id }
+    });
+
+    if (!milestone) return res.status(404).json({ error: 'Not found' });
+    if (!milestone.paidDate) return res.status(400).json({ error: 'Not paid' });
+
+    const hoursSincePaid = (new Date().getTime() - new Date(milestone.paidDate).getTime()) / (1000 * 60 * 60);
+    
+    if (hoursSincePaid > 24) {
+      return res.status(403).json({ 
+        error: 'Undo window expired — payment was marked over 24 hours ago' 
+      });
+    }
+
+    const updated = await prisma.paymentMilestone.update({
+      where: { id: req.params.id },
+      data: { status: 'UPCOMING', paidDate: null }
+    });
+
+    res.json({ success: true, milestone: updated });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

@@ -90,7 +90,7 @@ export const InventoryPage: React.FC = () => {
               </thead>
               <tbody className="text-sm">
                 {materials.map((m: any) => {
-                  const daysLeft = m.burnRate7Day > 0 ? m.currentStock / m.burnRate7Day : 99;
+                  const daysLeft = m.burnRate7Day > 0 ? (m.currentStock / m.burnRate7Day).toFixed(1) : '—';
                   let status = 'Good';
                   if (m.currentStock <= m.minThreshold) status = 'Critical';
                   else if (m.currentStock <= m.minThreshold * 1.5) status = 'Warning';
@@ -101,8 +101,8 @@ export const InventoryPage: React.FC = () => {
                       material={m.name} 
                       stock={`${m.currentStock} ${m.unit}`} 
                       threshold={`${m.minThreshold} ${m.unit}`} 
-                      burn={`${m.burnRate7Day} ${m.unit}/day`} 
-                      days={daysLeft.toFixed(1)} 
+                      burn={`${m.burnRate7Day > 0 ? m.burnRate7Day.toFixed(1) : 0} ${m.unit}/day`} 
+                      days={daysLeft} 
                       status={status} 
                       onClick={() => setSelectedMaterial(m)} 
                       selected={selectedMaterial?.id === m.id} 
@@ -252,13 +252,19 @@ export const InventoryPage: React.FC = () => {
   );
 };
 
-const InventoryRow = ({ material, stock, threshold, burn, days, status, onClick, selected }: any) => (
+const InventoryRow = ({ material, stock, threshold, burn, days, status, onClick, selected }: any) => {
+  let daysColor = 'text-on-surface';
+  if (days !== '—') {
+    const d = Number(days);
+    daysColor = d < 3 ? 'text-error' : d < 5 ? 'text-[#c2410c]' : 'text-[#166534]';
+  }
+  return (
   <tr onClick={onClick} className={`border-b border-outline-variant/50 hover:bg-surface transition-colors cursor-pointer ${selected ? 'bg-primary-container/10' : ''}`}>
     <td className="py-4 px-4 font-bold text-primary">{material}</td>
     <td className="py-4 px-4 font-medium text-on-surface">{stock}</td>
     <td className="py-4 px-4 text-on-surface-variant border-b border-dashed border-outline-variant inline-block mt-4 hover:border-primary">{threshold}</td>
     <td className="py-4 px-4 text-on-surface-variant">{burn}</td>
-    <td className={`py-4 px-4 font-bold ${days < 3 ? 'text-error' : days < 5 ? 'text-[#c2410c]' : 'text-[#166534]'}`}>{days}</td>
+    <td className={`py-4 px-4 font-bold ${daysColor}`}>{days}</td>
     <td className="py-4 px-4">
       <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider ${
         status === 'Critical' ? 'bg-error-container text-error' : 
@@ -269,7 +275,8 @@ const InventoryRow = ({ material, stock, threshold, burn, days, status, onClick,
       </span>
     </td>
   </tr>
-);
+  );
+};
 
 const EventCard = ({ date, event, qty, isPositive }: any) => (
   <div className="border border-outline-variant rounded p-3 bg-surface flex justify-between items-center">

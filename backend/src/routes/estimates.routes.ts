@@ -1,127 +1,170 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { authenticate } from '../middleware/authenticate';
 
-const router = Router();
+const router = Router({ mergeParams: true });
 const prisma = new PrismaClient();
 
-// CONCRETE ESTIMATOR LOGIC
-// Mix Ratios: cement:sand:aggregate
-const MIX_RATIOS: Record<string, { c: number, s: number, a: number }> = {
-  'M15': { c: 1, s: 2, a: 4 },
-  'M20': { c: 1, s: 1.5, a: 3 },
-  'M25': { c: 1, s: 1, a: 2 },
-  'M30': { c: 1, s: 0.75, a: 1.5 }
+const MIX_RATIOS: Record<string, { cement: number, sand: number, aggregate: number }> = {
+  'M15': { cement: 1, sand: 2,   aggregate: 4   },
+  'M20': { cement: 1, sand: 1.5, aggregate: 3   },
+  'M25': { cement: 1, sand: 1,   aggregate: 2   },
+  'M30': { cement: 1, sand: 0.75,aggregate: 1.5 },
+  'M35': { cement: 1, sand: 0.5, aggregate: 1   },
 };
 
-router.post('/concrete', async (req, res) => {
+// GET history of estimates for project
+router.get('/', authenticate, async (req, res) => {
   try {
-    const { projectId, engineerId, structure, grade, volume, wastageBuffer, currentRates } = req.body;
-    
-    // Calculation Logic
-    // Total dry volume is ~1.54 times wet volume
-    const dryVolume = volume * 1.54;
-    
-    const ratio = MIX_RATIOS[grade] || MIX_RATIOS['M25'];
-    const totalParts = ratio.c + ratio.s + ratio.a;
-    
-    // Cement: 1 bag = 0.0347 m3
-    const cementVolume = (ratio.c / totalParts) * dryVolume;
-    const cementBags = Math.ceil(cementVolume / 0.0347);
-    
-    // Sand & Aggregate in cft (1 m3 = 35.3147 cft)
-    const sandCft = (ratio.s / totalParts) * dryVolume * 35.3147;
-    const aggregateCft = (ratio.a / totalParts) * dryVolume * 35.3147;
-    
-    // Water: roughly 0.5 w/c ratio by weight. 1 bag cement = 50kg.
-    const waterLiters = cementBags * 50 * 0.5;
+    const { projectId } = req.params;
+    const { type } = req.query; // CONCRETE or STEEL
 
-    // Base Quantities
-    let baseQty = {
-      cement: cementBags,
-      sand: sandCft,
-      aggregate: aggregateCft,
-      water: waterLiters
+    const where: any = { projectId };
+    if (type) {
+      where.type = String(type).toUpperCase();
+    }
+
+    const estimates = await prisma.estimate.findMany({
+      where,
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Parse the JSON data back into objects for the frontend
+    const parsed = estimates.map(est => ({
+      ...est,
+      data: JSON.parse(est.data)
+    }));
+
+    res.json(parsed);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST Concrete Estimate
+router.post('/concrete', authenticate, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { structure, unit, length, width, thickness, grade, wastageBuffer } = req.body;
+
+    // Convert input dimensions to Metres if they are in Feet
+    const multiplier = unit === 'Feet' ? 0.3048 : 1;
+    const L = Number(length) * multiplier;
+    const W = Number(width) * multiplier;
+    const T = Number(thickness) * multiplier;
+
+    const wetVolume = L * W * T;
+    const dryVolume = wetVolume * 1.54;
+
+    const parsedGrade = grade.split(' ')[0]; // Extract "M25" from "M25 (1:1:2)" just in case UI still sends suffix
+    const ratio = MIX_RATIOS[parsedGrade];
+    if (!ratio) {
+      return res.status(400).json({ error: `Invalid concrete grade: ${parsedGrade}` });
+    }
+
+    const totalRatio = ratio.cement + ratio.sand + ratio.aggregate;
+
+    let cementBags = (dryVolume * ratio.cement / totalRatio) / 0.0347; // 0.0347m3 per bag
+    let sandCft = (dryVolume * ratio.sand / totalRatio) * 35.3147; // m3 to cft
+    let aggCft = (dryVolume * ratio.aggregate / totalRatio) * 35.3147;
+    let waterLitres = cementBags * 30; // Approx 30L per bag
+
+    // Apply wastage buffer
+    const bufferMultiplier = 1 + (Number(wastageBuffer) / 100);
+    cementBags *= bufferMultiplier;
+    sandCft *= bufferMultiplier;
+    aggCft *= bufferMultiplier;
+    waterLitres *= bufferMultiplier; // Usually water isn't considered "wasted" this way, but strictly following scaling logic
+
+    // Fetch material rates for project to calculate cost
+    const materials = await prisma.material.findMany({
+      where: { projectId, name: { in: ['cement', 'sand', 'aggregate'] } }
+    });
+    
+    // Map rates (fallback to 0 if not set)
+    const getRate = (name: string) => {
+      const mat = materials.find(m => m.name.toLowerCase() === name);
+      return mat ? mat.ratePerUnit : 0;
     };
 
-    // Add wastage buffer
-    const bufferMultiplier = 1 + (wastageBuffer / 100);
-    const finalQty = {
-      cement: Math.ceil(baseQty.cement * bufferMultiplier),
-      sand: Number((baseQty.sand * bufferMultiplier).toFixed(2)),
-      aggregate: Number((baseQty.aggregate * bufferMultiplier).toFixed(2)),
-      water: Number((baseQty.water * bufferMultiplier).toFixed(2))
+    const cementCost = cementBags * getRate('cement');
+    const sandCost = sandCft * getRate('sand');
+    const aggCost = aggCft * getRate('aggregate');
+    const totalCost = cementCost + sandCost + aggCost;
+
+    const resultData = {
+      inputs: { structure, unit, length, width, thickness, grade: parsedGrade, wastageBuffer },
+      outputs: {
+        wetVolume,
+        dryVolume,
+        cementBags,
+        sandCft,
+        aggCft,
+        waterLitres,
+        costs: {
+          cement: cementCost,
+          sand: sandCost,
+          aggregate: aggCost,
+          total: totalCost
+        }
+      }
     };
 
-    // Calculate Costs
-    const cost = {
-      cement: finalQty.cement * (currentRates.cement || 400),
-      sand: finalQty.sand * (currentRates.sand || 60),
-      aggregate: finalQty.aggregate * (currentRates.aggregate || 50),
-    };
-    const totalCost = cost.cement + cost.sand + cost.aggregate;
-
-    // Save Estimate
     const estimate = await prisma.estimate.create({
       data: {
         projectId,
-        engineerId,
+        engineerId: req.user.id,
         type: 'CONCRETE',
-        structure,
+        structure: structure || 'Unknown',
         totalCost,
-        data: JSON.stringify({ inputs: req.body, baseQty, finalQty, cost })
+        data: JSON.stringify(resultData)
       }
     });
 
-    res.json({ success: true, estimate });
+    res.json({ success: true, estimate: { ...estimate, data: resultData } });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-router.get('/concrete', async (req, res) => {
-  const { projectId } = req.query;
+// POST Steel Optimizer (FFD Algorithm)
+router.post('/steel', authenticate, async (req, res) => {
   try {
-    const estimates = await prisma.estimate.findMany({
-      where: { projectId: projectId as string, type: 'CONCRETE' },
-      orderBy: { createdAt: 'desc' }
-    });
-    res.json(estimates);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
+    const { projectId } = req.params;
+    const { standardRodLength, requirements } = req.body; 
+    // requirements: Array<{ length: number, quantity: number }>
 
-// STEEL OPTIMIZER LOGIC - FIRST FIT DECREASING (FFD)
-router.post('/steel', async (req, res) => {
-  try {
-    const { projectId, engineerId, standardLength, pricePerKg, weightPerM, cuts } = req.body;
-    
-    // cuts: Array<{ length: number, qty: number }>
-    // FFD Algorithm
-    // 1. Flatten into single array of all cut lengths
-    let requestedCuts: number[] = [];
-    cuts.forEach((c: any) => {
-      for (let i = 0; i < c.qty; i++) {
-        requestedCuts.push(c.length);
+    if (!standardRodLength || !requirements || !Array.isArray(requirements)) {
+      return res.status(400).json({ error: 'standardRodLength and requirements array are required' });
+    }
+
+    // Baseline: worst case (1 rod per cut)
+    const worstCaseRods = requirements.reduce((acc, r) => acc + r.quantity, 0);
+
+    // Flatten requirements
+    const pieces: number[] = [];
+    for (const reqObj of requirements) {
+      for (let i = 0; i < reqObj.quantity; i++) {
+        pieces.push(Number(reqObj.length));
       }
-    });
+    }
 
-    // 2. Sort descending
-    requestedCuts.sort((a, b) => b - a);
+    // Sort descending for FFD
+    pieces.sort((a, b) => b - a);
 
-    // 3. Pack into rods
-    let rods: { remaining: number, cuts: number[] }[] = [];
-    
-    for (let cut of requestedCuts) {
-      if (cut > standardLength) {
-        return res.status(400).json({ error: `Cut length ${cut}m exceeds standard rod length ${standardLength}m` });
+    const rods: { used: number[], remaining: number }[] = [];
+
+    // FFD Bin Packing
+    for (const piece of pieces) {
+      if (piece > standardRodLength) {
+        return res.status(400).json({ error: `Piece length ${piece} exceeds standard rod length ${standardRodLength}` });
       }
 
       let placed = false;
-      for (let rod of rods) {
-        if (rod.remaining >= cut) {
-          rod.remaining -= cut;
-          rod.cuts.push(cut);
+      for (const rod of rods) {
+        if (rod.remaining >= piece) {
+          rod.used.push(piece);
+          rod.remaining -= piece;
           placed = true;
           break;
         }
@@ -129,61 +172,54 @@ router.post('/steel', async (req, res) => {
 
       if (!placed) {
         rods.push({
-          remaining: standardLength - cut,
-          cuts: [cut]
+          used: [piece],
+          remaining: standardRodLength - piece
         });
       }
     }
 
-    // Calculations
-    const rodsNeeded = rods.length;
-    const totalSteelLength = rodsNeeded * standardLength;
-    const totalUsedLength = totalSteelLength - rods.reduce((acc, rod) => acc + rod.remaining, 0);
-    const scrapLength = totalSteelLength - totalUsedLength;
+    const totalRodsNeeded = rods.length;
+    const totalScrap = rods.reduce((acc, rod) => acc + rod.remaining, 0);
+    const scrapPercentage = (totalScrap / (totalRodsNeeded * standardRodLength)) * 100;
+
+    // Financial calculations
+    const steelMaterial = await prisma.material.findFirst({
+      where: { projectId, name: { contains: 'steel', mode: 'insensitive' } }
+    });
+    // Assuming rate is per kg. We need weight of rod.
+    // If rate is given directly per rod on frontend (pricePerRod input):
+    const pricePerRod = req.body.pricePerRod || (steelMaterial ? steelMaterial.ratePerUnit * standardRodLength * 0.617 : 0); // approx weight assumption if not passed
     
-    const scrapPct = (scrapLength / totalSteelLength) * 100;
-    
-    const totalCost = rodsNeeded * standardLength * weightPerM * pricePerKg;
-    
-    // Unoptimized cost (if they just bought enough rods to cover total linear meters directly + 15% random waste)
-    // Actually, "random cutting" usually results in 10-15% waste minimum. 
-    // We can simulate an unoptimized naive scenario: one cut per rod if possible, or worst-case.
-    // For simplicity, let's say naive random cutting wastes 15% on average.
-    const unoptimizedWastePct = 15;
-    const unoptimizedCost = (totalUsedLength * 1.15) * weightPerM * pricePerKg;
-    const rupeesSaved = Math.max(0, unoptimizedCost - totalCost);
+    const worstCaseCost = worstCaseRods * pricePerRod;
+    const optimizedCost = totalRodsNeeded * pricePerRod;
+    const moneySaved = worstCaseCost - optimizedCost;
+
+    const resultData = {
+      inputs: { standardRodLength, requirements, pricePerRod },
+      outputs: {
+        totalRodsNeeded,
+        worstCaseRods,
+        totalScrap,
+        scrapPercentage,
+        worstCaseCost,
+        optimizedCost,
+        moneySaved,
+        cuttingPlan: rods
+      }
+    };
 
     const estimate = await prisma.estimate.create({
       data: {
         projectId,
-        engineerId,
+        engineerId: req.user.id,
         type: 'STEEL',
-        structure: 'Steel Optimization',
-        totalCost,
-        data: JSON.stringify({ 
-          rodsNeeded, 
-          scrapPct, 
-          rupeesSaved, 
-          rodsConfig: rods, 
-          totalCost 
-        })
+        structure: 'Steel Optimizer',
+        totalCost: optimizedCost,
+        data: JSON.stringify(resultData)
       }
     });
 
-    res.json({ success: true, estimate });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.get('/steel', async (req, res) => {
-  const { projectId } = req.query;
-  try {
-    const estimates = await prisma.estimate.findMany({
-      where: { projectId: projectId as string, type: 'STEEL' },
-      orderBy: { createdAt: 'desc' }
-    });
-    res.json(estimates);
+    res.json({ success: true, estimate: { ...estimate, data: resultData } });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

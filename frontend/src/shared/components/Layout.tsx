@@ -1,13 +1,53 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
 import { useToast } from './ToastContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiClient } from '../api/apiClient';
 
 export const Layout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
 
   const userRole = localStorage.getItem('userRole') || 'project_manager';
+
+  // Fetch projects for context switcher
+  const { data: projects } = useQuery({
+    queryKey: ['projects'],
+    queryFn: async () => {
+      const res = await apiClient.get('/api/projects');
+      return res.data;
+    }
+  });
+
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  
+  // Set default project when loaded
+  React.useEffect(() => {
+    if (projects?.length && !selectedProjectId) {
+      setSelectedProjectId(projects[0].id);
+    }
+  }, [projects, selectedProjectId]);
+
+  // Fetch notifications
+  const { data: notifData } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => {
+      const res = await apiClient.get('/api/notifications');
+      return res.data;
+    },
+    refetchInterval: 30000 // Poll every 30s
+  });
+
+  const markAllRead = useMutation({
+    mutationFn: async () => {
+      await apiClient.put('/api/notifications/read-all');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    }
+  });
 
   const navSections = [
     {
@@ -56,9 +96,17 @@ export const Layout: React.FC = () => {
         <div className="px-6 mb-8 flex flex-col gap-1">
           <div className="flex items-center gap-3 mt-2">
             <div className="w-8 h-8 bg-on-primary rounded flex items-center justify-center text-primary font-bold">BW</div>
-            <div>
-              <div className="font-page-title text-page-title font-bold text-on-primary leading-tight">Project Alpha</div>
-              <div className="text-on-primary-fixed-variant text-[11px]">Construction Site</div>
+            <div className="flex flex-col w-full pr-2">
+              <select 
+                className="font-page-title text-sm font-bold text-on-primary leading-tight bg-transparent border-b border-primary-fixed-variant outline-none focus:border-secondary transition-colors pb-1 cursor-pointer"
+                value={selectedProjectId || ''}
+                onChange={(e) => setSelectedProjectId(e.target.value)}
+              >
+                {projects?.map((p: any) => (
+                  <option key={p.id} value={p.id} className="text-on-surface bg-surface-lowest">{p.name}</option>
+                ))}
+              </select>
+              <div className="text-on-primary-fixed-variant text-[11px] mt-1">Construction Site</div>
             </div>
           </div>
         </div>
@@ -124,32 +172,32 @@ export const Layout: React.FC = () => {
             <div className="relative group">
               <button className="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded hover:bg-surface-variant relative">
                 <span className="material-symbols-outlined text-[20px]">notifications</span>
-                <span className="absolute top-1 right-1 w-2 h-2 bg-secondary-container rounded-full"></span>
+                {notifData?.unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-error rounded-full animate-pulse"></span>
+                )}
               </button>
               
-              {/* Simple Notifications Dropdown */}
-              <div className="absolute right-0 mt-2 w-72 bg-surface-lowest border border-outline-variant shadow-lg rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+              {/* Notifications Dropdown */}
+              <div className="absolute right-0 mt-2 w-80 bg-surface-lowest border border-outline-variant shadow-lg rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                 <div className="p-3 border-b border-outline-variant flex justify-between items-center bg-surface-variant/20">
                   <span className="font-bold text-sm text-primary">Recent Alerts</span>
-                  <span className="text-[10px] bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded">1 New</span>
+                  {notifData?.unreadCount > 0 && (
+                    <button onClick={() => markAllRead.mutate()} className="text-[10px] text-primary hover:underline cursor-pointer font-bold">Mark all read</button>
+                  )}
                 </div>
-                <div className="flex flex-col max-h-[300px] overflow-y-auto">
-                  <div className="p-3 border-b border-outline-variant/50 hover:bg-surface-variant/30 cursor-pointer flex gap-3">
-                    <span className="material-symbols-outlined text-error text-[20px] mt-0.5">warning</span>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-sm font-bold">High Delay Alert</span>
-                      <span className="text-xs text-on-surface-variant">Weather delay of 8 hours reported by contractor.</span>
-                      <span className="text-[10px] text-on-surface-variant/70">10 mins ago</span>
+                <div className="flex flex-col max-h-[350px] overflow-y-auto">
+                  {notifData?.notifications?.length > 0 ? notifData.notifications.map((n: any) => (
+                    <div key={n.id} className={`p-3 border-b border-outline-variant/50 hover:bg-surface-variant/30 cursor-pointer flex gap-3 ${n.isRead ? 'opacity-60' : 'bg-primary/5'}`}>
+                      <span className="material-symbols-outlined text-primary text-[20px] mt-0.5">info</span>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-sm font-bold">{n.type}</span>
+                        <span className="text-xs text-on-surface-variant">{n.message}</span>
+                        <span className="text-[10px] text-on-surface-variant/70">{new Date(n.createdAt).toLocaleString()}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-3 border-b border-outline-variant/50 hover:bg-surface-variant/30 cursor-pointer flex gap-3 opacity-70">
-                    <span className="material-symbols-outlined text-[#166534] text-[20px] mt-0.5">check_circle</span>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-sm font-bold">Estimate Approved</span>
-                      <span className="text-xs text-on-surface-variant">Concrete M20 estimate #4521 approved.</span>
-                      <span className="text-[10px] text-on-surface-variant/70">2 hours ago</span>
-                    </div>
-                  </div>
+                  )) : (
+                    <div className="p-6 text-center text-on-surface-variant text-sm">No recent notifications</div>
+                  )}
                 </div>
                 <div className="p-2 text-center text-xs font-bold text-primary hover:underline cursor-pointer bg-surface-variant/10 rounded-b-lg">
                   View All Activity

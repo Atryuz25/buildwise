@@ -1,13 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiClient } from '../../api/apiClient';
+import { useAuth } from '../../shared/hooks/useAuth';
+import { useToast } from '../../shared/components/ToastContext';
 
 export const WeatherRiskPage: React.FC = () => {
-  const [showBanner, setShowBanner] = useState(true);
+  const [showBanner, setShowBanner] = useState(false);
+  const [forecast, setForecast] = useState<any[]>([]);
+  const [isMock, setIsMock] = useState(false);
+  const { user } = useAuth();
+  const { showToast } = useToast();
+
+  const activeProjectId = user?.projectIds?.[0];
+
+  useEffect(() => {
+    // Check if current date is between Jun 1 and Sep 30
+    const today = new Date();
+    const month = today.getMonth() + 1; // 1-indexed
+    if (month >= 6 && month <= 9) {
+      setShowBanner(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!activeProjectId) return;
+    const fetchWeather = async () => {
+      try {
+        const res = await apiClient.get(`/projects/${activeProjectId}/weather`);
+        setForecast(res.forecast || []);
+        setIsMock(res.isMock);
+      } catch (err) {
+        showToast('Failed to load 5-day weather forecast', 'error');
+      }
+    };
+    fetchWeather();
+  }, [activeProjectId]);
 
   return (
     <div className="p-page-padding w-full h-full flex flex-col gap-6 overflow-hidden">
       <div className="flex justify-between items-end pb-2 shrink-0 border-b border-outline-variant">
         <div>
-          <h1 className="font-section-heading text-[24px] font-bold text-on-surface">Weather Risk Assessment</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="font-section-heading text-[24px] font-bold text-on-surface">Weather Risk Assessment</h1>
+            {isMock && <span className="bg-primary/10 text-primary text-xs font-bold px-2 py-1 rounded uppercase tracking-wider">Demo Data</span>}
+          </div>
           <p className="text-on-surface-variant text-sm mt-1">Plan pours and exterior work around 5-day forecasts.</p>
         </div>
       </div>
@@ -27,14 +62,25 @@ export const WeatherRiskPage: React.FC = () => {
 
         {/* 5-day forecast strip */}
         <div className="bg-surface-lowest border border-outline-variant rounded p-6 shrink-0">
-          <h2 className="font-section-heading text-lg text-primary font-bold mb-4">5-Day Forecast (Mumbai, MH)</h2>
-          <div className="flex gap-4">
-            <ForecastCard day="Today" temp="28°C" rain="65%" wind="18km/h" humidity="88%" icon="rainy" isActive />
-            <ForecastCard day="Tomorrow" temp="29°C" rain="45%" wind="15km/h" humidity="82%" icon="cloudy" />
-            <ForecastCard day="Wednesday" temp="31°C" rain="10%" wind="12km/h" humidity="70%" icon="partly_cloudy_day" />
-            <ForecastCard day="Thursday" temp="32°C" rain="0%" wind="10km/h" humidity="65%" icon="sunny" />
-            <ForecastCard day="Friday" temp="32°C" rain="0%" wind="8km/h" humidity="60%" icon="sunny" />
-          </div>
+          <h2 className="font-section-heading text-lg text-primary font-bold mb-4">5-Day Forecast</h2>
+          {forecast.length > 0 ? (
+            <div className="flex gap-4 overflow-x-auto pb-2">
+              {forecast.map((day, index) => (
+                <ForecastCard 
+                  key={index}
+                  day={day.date} 
+                  temp={`${day.temp}°C`} 
+                  rain={day.condition === 'Rain' ? '80%' : '10%'} 
+                  wind={`${day.wind}km/h`} 
+                  humidity="80%" 
+                  icon={day.condition === 'Rain' ? 'rainy' : 'sunny'} 
+                  isActive={index === 0} 
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-on-surface-variant text-sm">Loading forecast data...</div>
+          )}
         </div>
 
         {/* Activity risk panel */}
@@ -45,7 +91,7 @@ export const WeatherRiskPage: React.FC = () => {
             <ActivityRiskRow 
               activity="Concrete Slab Pour" 
               risk="High" 
-              reason="Avoid after 2 PM — Heavy rain likely. High humidity (88%) will affect curing." 
+              reason="Avoid after 2 PM — Heavy rain likely. High humidity will affect curing." 
             />
             <ActivityRiskRow 
               activity="Concrete Column Pour" 
@@ -70,7 +116,7 @@ export const WeatherRiskPage: React.FC = () => {
 };
 
 const ForecastCard = ({ day, temp, rain, wind, humidity, icon, isActive }: any) => (
-  <div className={`flex-1 rounded p-4 flex flex-col items-center border ${
+  <div className={`min-w-[150px] flex-1 rounded p-4 flex flex-col items-center border ${
     isActive ? 'bg-primary-container/10 border-primary shadow-sm' : 'bg-surface border-outline-variant'
   }`}>
     <div className={`font-bold ${isActive ? 'text-primary' : 'text-on-surface-variant'}`}>{day}</div>

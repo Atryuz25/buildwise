@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../shared/components/ToastContext';
+import { useAuth } from '../../shared/hooks/useAuth';
+import { apiClient } from '../../api/apiClient';
 
 interface Milestone {
   id: number;
@@ -34,21 +36,69 @@ export const PaymentMilestoneTracker: React.FC = () => {
 
   const formatRupees = (amount: number) => `₹${(amount / 100000).toFixed(2)}L`;
 
-  const handleMarkPaid = (id: number) => {
-    setMilestones(prev => prev.map(m => m.id === id ? { ...m, status: 'paid', paidDate: 'Oct 24, 2023' } : m));
-    showToast('Milestone marked as paid', 'success');
+  const { user } = useAuth();
+  const projectId = user?.projectIds?.[0];
+
+  useEffect(() => {
+    if (!projectId) return;
+    const fetchMilestones = async () => {
+      try {
+        const res = await apiClient.get('/milestones');
+        // Filter for project if API returns all, or API might filter by project already
+        const projectMilestones = res.filter((m: any) => m.projectId === projectId || m.project === 'Project Alpha');
+        
+        const mapped = projectMilestones.map((m: any) => {
+          const due = new Date(m.dueDate);
+          const now = new Date();
+          const diffTime = due.getTime() - now.getTime();
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          return {
+            id: m.id,
+            contractor: 'Mapped Contractor', // Mocked as relation isn't fully set up in UI
+            trade: 'Civil',
+            name: m.milestone || m.title,
+            amount: m.amount,
+            dueDate: m.dueDate,
+            status: m.status.toLowerCase(),
+            paidDate: m.paidDate,
+            daysRemaining: m.status === 'UPCOMING' ? diffDays : undefined,
+            daysOverdue: m.status === 'OVERDUE' ? -diffDays : undefined
+          };
+        });
+        if (mapped.length > 0) {
+          setMilestones(mapped);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchMilestones();
+  }, [projectId]);
+
+  const handleMarkPaid = async (id: number) => {
+    try {
+      await apiClient.patch(`/milestones/${id}/status`, { status: 'PAID' });
+      setMilestones(prev => prev.map(m => m.id === id ? { ...m, status: 'paid', paidDate: new Date().toISOString() } : m));
+      showToast('Milestone marked as paid', 'success');
+    } catch (err) {
+      showToast('Failed to mark paid', 'error');
+    }
   };
 
-  const handleUndoPaid = (id: number) => {
-    setMilestones(prev => prev.map(m => {
-      if (m.id === id) {
-        // Simple logic for prototype to determine if it was overdue
-        const isPast = new Date(m.dueDate) < new Date();
-        return { ...m, status: isPast ? 'overdue' : 'upcoming', daysRemaining: 5, daysOverdue: isPast ? 3 : undefined };
-      }
-      return m;
-    }));
-    showToast('Payment undone', 'info');
+  const handleUndoPaid = async (id: number) => {
+    try {
+      await apiClient.put(`/milestones/${id}/unpay`);
+      setMilestones(prev => prev.map(m => {
+        if (m.id === id) {
+          const isPast = new Date(m.dueDate) < new Date();
+          return { ...m, status: isPast ? 'overdue' : 'upcoming', daysRemaining: 5, daysOverdue: isPast ? 3 : undefined };
+        }
+        return m;
+      }));
+      showToast('Payment undone', 'info');
+    } catch (err: any) {
+      showToast(err.response?.data?.error || err.message || 'Undo failed', 'error');
+    }
   };
 
   const handleAddMilestone = () => {

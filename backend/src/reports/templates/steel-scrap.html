@@ -1,0 +1,29 @@
+<h2>Steel Optimization Summary</h2>
+<p>Total ₹ Saved: <span class="metric">₹{{totalSaved}}</span></p>
+<p>Average Scrap Percentage: <strong>{{avgScrap}}%</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Worst Case Rods</th>
+      <th>Optimized Rods</th>
+      <th>Scrap %</th>
+      <th>₹ Saved</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#items}}
+    <tr>
+      <td>{{date}}</td>
+      <td>{{worstCase}}</td>
+      <td>{{optimized}}</td>
+      <td>{{scrap}}%</td>
+      <td>₹{{saved}}</td>
+    </tr>
+    {{/items}}
+    {{^items}}
+    <tr><td colspan="5" style="text-align: center;">No steel optimizer runs found.</td></tr>
+    {{/items}}
+  </tbody>
+</table>

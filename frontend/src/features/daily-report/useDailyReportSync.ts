@@ -2,6 +2,14 @@ import { useToast } from '../../shared/components/ToastContext';
 import { apiClient } from '../../api/apiClient';
 import { useOfflineSync } from '../../shared/offline/useOfflineSync';
 
+export interface ActivityUsage {
+  name: string;
+  location: string;
+  status: string;
+  expectedPct: number;
+  actualPct: number;
+}
+
 export interface MaterialUsage {
   materialId: string;
   expected: number;
@@ -22,9 +30,11 @@ export interface IssueDelay {
 }
 
 export interface DailyReportData {
+  id?: string;
   date: string;
   projectId: string;
   engineerId: string;
+  activities: ActivityUsage[];
   materials: MaterialUsage[];
   crews: CrewUsage[];
   issues: IssueDelay[];
@@ -46,7 +56,8 @@ export const useDailyReportSync = () => {
         return true;
       }
 
-      await apiClient.post('/daily-report', reportData);
+      const reportId = reportData.id || 'new';
+      await apiClient.post(`/projects/${reportData.projectId}/daily-reports/${reportId}/submit`, reportData);
 
       showToast('Daily Report Submitted & Synced', 'success');
       return true;
@@ -58,5 +69,20 @@ export const useDailyReportSync = () => {
     }
   };
 
-  return { syncToAuditStore };
+  const autoSaveDraft = async (reportData: DailyReportData) => {
+    try {
+      if (!isOnline) {
+        // Can optionally save drafts to IndexedDB here
+        return null;
+      }
+      
+      const res = await apiClient.post(`/projects/${reportData.projectId}/daily-reports`, reportData);
+      return res.reportId;
+    } catch (error) {
+      console.error('Failed to auto-save draft:', error);
+      return null;
+    }
+  };
+
+  return { syncToAuditStore, autoSaveDraft };
 };

@@ -9,9 +9,15 @@ export const SiteEngineerDashboard: React.FC = () => {
   return (
     <div className="p-page-padding w-full h-full flex flex-col gap-6">
       <div className="flex justify-between items-end pb-2 shrink-0 border-b border-outline-variant">
-        <div>
-          <h1 className="font-section-heading text-[24px] font-bold text-on-surface">Site Engineer Dashboard</h1>
-          <p className="text-on-surface-variant text-sm mt-1">Daily tasks and immediate actions.</p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="font-section-heading text-[24px] font-bold text-on-surface">Site Engineer Dashboard</h1>
+            <p className="text-on-surface-variant text-sm mt-1">Daily tasks and immediate actions.</p>
+          </div>
+          <div className="bg-[#fff7ed] border border-[#ea580c]/30 text-[#ea580c] px-3 py-1.5 rounded-full flex items-center gap-2 shadow-sm">
+            <span className="material-symbols-outlined text-[18px]">local_fire_department</span>
+            <span className="text-sm font-bold">14 Day Streak</span>
+          </div>
         </div>
       </div>
 

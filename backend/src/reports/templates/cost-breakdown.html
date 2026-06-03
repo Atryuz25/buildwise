@@ -1,0 +1,26 @@
+<h2>Material Cost Breakdown</h2>
+<p>Total Spend: <span class="metric">₹{{totalSpend}}</span></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Material</th>
+      <th>Total Consumed</th>
+      <th>Rate</th>
+      <th>Total Cost</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#items}}
+    <tr>
+      <td>{{material}}</td>
+      <td>{{consumed}} {{unit}}</td>
+      <td>₹{{rate}}/{{unit}}</td>
+      <td>₹{{cost}}</td>
+    </tr>
+    {{/items}}
+    {{^items}}
+    <tr><td colspan="4" style="text-align: center;">No cost data found.</td></tr>
+    {{/items}}
+  </tbody>
+</table>

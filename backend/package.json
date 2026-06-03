@@ -13,21 +13,34 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1057.0",
+    "@aws-sdk/s3-request-presigner": "^3.1057.0",
     "@prisma/client": "^5.22.0",
+    "@types/mustache": "^4.2.6",
     "bullmq": "^5.77.6",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "ioredis": "^5.11.0",
+    "ioredis-mock": "^8.13.1",
+    "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.1",
+    "mustache": "^4.2.0",
     "openai": "^6.39.1",
     "prisma": "^5.22.0",
-    "puppeteer": "^25.1.0"
+    "puppeteer": "^25.1.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.1.0",
     "@types/node": "^25.9.1",
     "nodemon": "^3.1.14",
