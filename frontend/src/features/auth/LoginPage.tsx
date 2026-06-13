@@ -191,8 +191,7 @@ export const LoginPage: React.FC = () => {
             </form>
           )}
 
-          {/* DEV ONLY MOCK LOGIN */}
-          {import.meta.env.MODE === 'development' && (
+          {/* DEV ONLY MOCK LOGIN (Enabled everywhere for demo purposes) */}
             <div className="mt-8 pt-8 border-t border-outline-variant">
               <div className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3 text-center">
                 🛠 Dev Only: Quick Login
@@ -257,7 +256,6 @@ export const LoginPage: React.FC = () => {
                 </button>
               </div>
             </div>
-          )}
 
         </div>
       </div>
