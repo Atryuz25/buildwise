@@ -36,7 +36,6 @@ export const AttendanceTrackerPage: React.FC = () => {
   );
 
   const [crews, setCrews] = useState<any[]>([]);
-  const [attendances, setAttendances] = useState<any[]>([]);
 
   // Seeded project ID for demo purposes
   const projectId = "294b2977-35cb-491f-9244-e9d983523101";
@@ -65,7 +64,6 @@ export const AttendanceTrackerPage: React.FC = () => {
         });
 
         setCrews(mappedCrews);
-        setAttendances(attendanceRes);
       } catch (err) {
         console.error("Failed to fetch attendance data:", err);
       }

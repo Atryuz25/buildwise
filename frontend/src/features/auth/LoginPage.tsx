@@ -16,12 +16,12 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast } = useToast();
-  const { login, user } = useAuth();
+  const { login } = useAuth();
 
   useEffect(() => {
     // Initialize invisible reCAPTCHA
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+    if (!(window as any).recaptchaVerifier) {
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         size: 'invisible',
         callback: () => {
           // reCAPTCHA solved
@@ -35,7 +35,7 @@ export const LoginPage: React.FC = () => {
     setIsLoading(true);
     try {
       const formattedPhone = `+91${phone}`;
-      const appVerifier = window.recaptchaVerifier;
+      const appVerifier = (window as any).recaptchaVerifier;
       
       const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
       setConfirmationResult(confirmation);
@@ -45,9 +45,9 @@ export const LoginPage: React.FC = () => {
     } catch (err: any) {
       console.error(err);
       // Reset reCAPTCHA so the user can try again
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.render().then((widgetId: any) => {
-          window.grecaptcha.reset(widgetId);
+      if ((window as any).recaptchaVerifier) {
+        (window as any).recaptchaVerifier.render().then((widgetId: any) => {
+          (window as any).grecaptcha.reset(widgetId);
         });
       }
       showToast(err.message || 'Failed to send OTP. Check Firebase config.', 'error');
