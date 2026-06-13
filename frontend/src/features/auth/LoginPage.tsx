@@ -64,7 +64,7 @@ export const LoginPage: React.FC = () => {
       
       // Confirm OTP with Firebase
       const result = await confirmationResult.confirm(otp);
-      const idToken = await result.user.getIdToken();
+      await result.user.getIdToken();
 
       // Exchange Firebase token for BuildWise JWT
       // We pass the universal mock OTP '123456' to the backend to bypass its internal Redis check

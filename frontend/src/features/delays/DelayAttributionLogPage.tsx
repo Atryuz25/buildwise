@@ -11,7 +11,7 @@ export const DelayAttributionLogPage: React.FC = () => {
 
   // Data State
   const [delayEntries, setDelayEntries] = useState<any[]>([]);
-  const [totalDays, setTotalDays] = useState(0);
+  const [, setTotalDays] = useState(0);
   const [causeData, setCauseData] = useState<any[]>([]);
 
   useEffect(() => {
@@ -162,7 +162,7 @@ export const DelayAttributionLogPage: React.FC = () => {
              <ResponsiveContainer width="100%" height="100%">
                <PieChart>
                  <Pie data={causeData} innerRadius={20} outerRadius={30} dataKey="value" stroke="none">
-                   {causeData.map((entry, index) => <Cell key={`cell-${index}`} fill={getPieColor(index)} />)}
+                   {causeData.map((_entry, index) => <Cell key={`cell-${index}`} fill={getPieColor(index)} />)}
                  </Pie>
                  <Tooltip contentStyle={{ fontSize: '10px', padding: '4px' }} />
                </PieChart>
@@ -237,7 +237,7 @@ export const DelayAttributionLogPage: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-1.5 text-on-surface-variant">
                       <span className="material-symbols-outlined text-[16px]">category</span>
-                      {entry.activities.map(act => (
+                      {entry.activities.map((act: any) => (
                         <span key={act} className="bg-surface-variant/30 px-1.5 py-0.5 rounded border border-outline-variant/50">{act}</span>
                       ))}
                     </div>

@@ -8,7 +8,7 @@ export const InventoryPage: React.FC = () => {
   const { showToast } = useToast();
   
   const [materials, setMaterials] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
   const [deliveryMaterialId, setDeliveryMaterialId] = useState('');
@@ -18,7 +18,7 @@ export const InventoryPage: React.FC = () => {
   const [adjustmentReason, setAdjustmentReason] = useState('');
 
   // Hardcode a projectId for demo since we don't have project selection yet
-  const projectId = 'Project Alpha'; // In real app, this comes from context or route
+  // const projectId = 'Project Alpha'; // In real app, this comes from context or route
 
   useEffect(() => {
     const fetchInventory = async () => {

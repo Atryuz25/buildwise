@@ -259,6 +259,7 @@ const KpiCard = ({ title, value, trend, isGood, icon, subtext }: any) => (
   </div>
 );
 
+// @ts-ignore
 const PendingAuditCard = ({ engineer, days }: any) => {
   const { showToast } = useToast();
   return (

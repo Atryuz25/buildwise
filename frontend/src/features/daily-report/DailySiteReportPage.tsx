@@ -23,11 +23,11 @@ export const DailySiteReportPage: React.FC = () => {
   };
 
   const [activities, setActivities] = useState([{ id: 1, name: '', location: '', status: 'In progress', expectedPct: 50, actualPct: 50 }]);
-  const [materials, setMaterials] = useState([
+  const [materials] = useState([
     { id: 1, name: 'Cement (bags)', expected: 100, actual: 110, isRisk: true },
     { id: 2, name: 'River Sand (cft)', expected: 800, actual: 800, isRisk: false }
   ]);
-  const [crews, setCrews] = useState([
+  const [crews] = useState([
     { id: 1, name: 'Civil Team A', expected: 20, actual: 18, foreman: 'Ramesh', target: '200 sqft', actualOutput: '180 sqft' }
   ]);
   const [issues, setIssues] = useState<{id: number, type: string, desc: string, severity: string}[]>([]);
@@ -184,7 +184,7 @@ export const DailySiteReportPage: React.FC = () => {
               </button>
               {activeSections.work && (
                 <div className="p-4 space-y-4 bg-surface">
-                  {activities.map((act, idx) => (
+                  {activities.map((act, _idx) => (
                     <div key={act.id} className="grid grid-cols-2 gap-4 pb-4 border-b border-outline-variant/50 last:border-0">
                       <div>
                         <label className="block text-xs font-bold text-on-surface-variant mb-1">Activity Name</label>
@@ -314,7 +314,7 @@ export const DailySiteReportPage: React.FC = () => {
                     </div>
                   )}
 
-                  {issues.map((issue, idx) => (
+                  {issues.map((issue, _idx) => (
                      <div key={issue.id} className="grid grid-cols-2 gap-4 pb-4 border-b border-outline-variant/50 relative">
                         <button onClick={() => setIssues(issues.filter(i => i.id !== issue.id))} className="absolute top-0 right-0 text-on-surface-variant hover:text-error transition-colors">
                           <span className="material-symbols-outlined text-[16px]">close</span>

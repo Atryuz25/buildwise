@@ -9,7 +9,7 @@ export const ProjectsPage: React.FC = () => {
   const { showToast } = useToast();
 
   const [projects, setProjects] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProjects = async () => {

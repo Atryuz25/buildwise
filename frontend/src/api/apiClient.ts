@@ -59,8 +59,8 @@ export const apiClient = {
     return res.data;
   },
 
-  async post(endpoint: string, data?: any) {
-    const res = await axiosInstance.post(endpoint, data);
+  async post(endpoint: string, data?: any, config?: any) {
+    const res = await axiosInstance.post(endpoint, data, config);
     return res.data;
   },
 

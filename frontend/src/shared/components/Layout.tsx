@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
-import { useToast } from './ToastContext';
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/apiClient';
 import { OfflineBanner } from './OfflineBanner';
@@ -8,7 +8,7 @@ import { OfflineBanner } from './OfflineBanner';
 export const Layout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { showToast } = useToast();
+  // const { showToast } = useToast();
   const queryClient = useQueryClient();
 
   const userRole = localStorage.getItem('userRole') || 'project_manager';
