@@ -102,22 +102,22 @@ router.post('/verify-otp', async (req, res) => {
     // Set HTTP-Only cookies
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: true,
+      sameSite: 'none',
       maxAge: 15 * 60 * 1000 // 15 mins
     });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       maxAge: REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000,
     });
 
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       maxAge: 15 * 60 * 1000,
     });
 
@@ -130,9 +130,9 @@ router.post('/verify-otp', async (req, res) => {
 
 // DEV ONLY: Mock Login
 router.post('/mock-login', async (req, res) => {
-  if (process.env.NODE_ENV === 'production') {
-    return res.status(403).json({ error: 'Not allowed in production' });
-  }
+  // if (process.env.NODE_ENV === 'production') {
+  //   return res.status(403).json({ error: 'Not allowed in production' });
+  // }
 
   try {
     const { role } = req.body;
@@ -190,15 +190,15 @@ router.post('/mock-login', async (req, res) => {
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       maxAge: REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000,
     });
     
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       maxAge: 15 * 60 * 1000,
     });
 
@@ -243,8 +243,8 @@ router.post('/refresh', async (req, res) => {
 
     res.cookie('accessToken', newAccessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: true,
+      sameSite: 'none',
       maxAge: 15 * 60 * 1000
     });
 
