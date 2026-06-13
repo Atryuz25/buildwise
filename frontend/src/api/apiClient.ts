@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3005/api';
+
 export const axiosInstance = axios.create({
-  baseURL: 'http://localhost:3005/api',
+  baseURL: API_URL,
   withCredentials: true,
 });
 
@@ -34,7 +36,7 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        await axios.post('http://localhost:3005/api/auth/refresh', {}, { withCredentials: true });
+        await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
         isRefreshing = false;
         onRefreshed('Success');
         refreshSubscribers = [];
