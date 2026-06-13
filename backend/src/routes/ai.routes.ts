@@ -314,4 +314,96 @@ router.post('/reference-photos', upload.single('image'), async (req, res) => {
   }
 });
 
+router.post('/rebar-check', upload.single('image'), async (req, res) => {
+  try {
+    const { projectId, gps } = req.body;
+    const file = req.file;
+
+    if (!file) return res.status(400).json({ error: 'No image uploaded' });
+    if (!projectId) return res.status(400).json({ error: 'Missing projectId' });
+
+    const ext = file.originalname.split('.').pop();
+    const fileName = `rebar_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('buildwise-photos')
+      .upload(fileName, file.buffer, { contentType: file.mimetype });
+
+    let photoUrl = null;
+    if (!uploadError) {
+      const { data } = supabase.storage.from('buildwise-photos').getPublicUrl(fileName);
+      photoUrl = data.publicUrl;
+    }
+
+    const reference = await prisma.aiReferencePhoto.findFirst({
+      where: { projectId, feature: 'REBAR_CHECK' },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    let resultJson = {
+      spacingCorrect: true,
+      tiesMissing: 0,
+      flagged: false,
+      issues: [] as string[]
+    };
+
+    if (USE_MOCK) {
+      resultJson = {
+        spacingCorrect: false,
+        tiesMissing: 3,
+        flagged: true,
+        issues: ['Spacing inconsistent on bottom left', 'Missing ties on lap joints', 'Surface rust detected']
+      };
+    } else {
+      const model = genAI.getGenerativeModel({ 
+        model: "gemini-2.5-flash",
+        generationConfig: { responseMimeType: "application/json" }
+      });
+      const contentParts: any[] = [];
+
+      if (reference) {
+        let refBuffer: ArrayBuffer | null = null;
+        let refMime = 'image/jpeg';
+        try {
+          const refRes = await fetch(reference.photoUrl);
+          refBuffer = await refRes.arrayBuffer();
+          refMime = refRes.headers.get('content-type') || 'image/jpeg';
+        } catch (e) {
+          console.error("Failed to load reference photo for AI:", e);
+        }
+
+        if (refBuffer) {
+          contentParts.push(`IMAGE 1 (Reference Photo):\nThis is the approved standard for rebar layout on this project.`);
+          contentParts.push({ inlineData: { data: Buffer.from(refBuffer).toString('base64'), mimeType: refMime } });
+          contentParts.push(`IMAGE 2 (Target Photo):\nThis is the new rebar layout to inspect.`);
+          contentParts.push({ inlineData: { data: file.buffer.toString('base64'), mimeType: file.mimetype } });
+          contentParts.push(`Compare IMAGE 2 against IMAGE 1. Check for missing ties, incorrect spacing, and any visible defects like rust or damage. Return a strict JSON response in exactly this format without any markdown wrappers: {"spacingCorrect": boolean, "tiesMissing": number, "flagged": boolean, "issues": ["string array of issues"]}`);
+        } else {
+          contentParts.push(`This is a photo of a rebar layout. Check for missing ties, incorrect spacing, and any visible defects like rust or damage. Return a strict JSON response in exactly this format without any markdown wrappers: {"spacingCorrect": boolean, "tiesMissing": number, "flagged": boolean, "issues": ["string array of issues"]}`);
+          contentParts.push({ inlineData: { data: file.buffer.toString('base64'), mimeType: file.mimetype } });
+        }
+      } else {
+        contentParts.push(`This is a photo of a rebar layout. Check for missing ties, incorrect spacing, and any visible defects like rust or damage. Return a strict JSON response in exactly this format without any markdown wrappers: {"spacingCorrect": boolean, "tiesMissing": number, "flagged": boolean, "issues": ["string array of issues"]}`);
+        contentParts.push({ inlineData: { data: file.buffer.toString('base64'), mimeType: file.mimetype } });
+      }
+
+      const aiPromise = model.generateContent(contentParts);
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 60000));
+      
+      try {
+        const resultAI: any = await Promise.race([aiPromise, timeoutPromise]);
+        const responseText = resultAI.response.text().trim();
+        const cleanedText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        resultJson = JSON.parse(cleanedText);
+      } catch (e: any) {
+        if (e.message === 'TIMEOUT') return res.status(504).json({ error: 'Unable to inspect — timeout' });
+        return res.status(500).json({ error: 'Unable to inspect: ' + e.message });
+      }
+    }
+
+    res.json({ ...resultJson, photoUrl });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

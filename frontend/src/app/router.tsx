@@ -22,6 +22,7 @@ import { ContractorsManagementPage } from '../features/contractors/ContractorsMa
 import { PaymentMilestoneTracker } from '../features/payments/PaymentMilestoneTracker';
 import { PileMeasurementPage } from '../features/camera-ai/PileMeasurementPage';
 import { AICalibrationPage } from '../features/camera-ai/AICalibrationPage';
+import { RebarCheckPage } from '../features/camera-ai/RebarCheckPage';
 
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles: string[] }) => {
   const role = localStorage.getItem('userRole');
@@ -127,6 +128,10 @@ const router = createBrowserRouter([
       {
         path: 'camera-ai/pile-measurement',
         element: <PileMeasurementPage />,
+      },
+      {
+        path: 'camera-ai/rebar-check',
+        element: <RebarCheckPage />,
       },
       {
         path: 'camera-ai/calibration',

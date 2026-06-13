@@ -93,6 +93,7 @@ export const Layout: React.FC = () => {
       title: 'Camera AI',
       items: [
         { name: 'Pile Measurement', path: '/camera-ai/pile-measurement', icon: 'straighten', roles: ['site_engineer', 'project_manager', 'admin'] },
+        { name: 'Rebar Check', path: '/camera-ai/rebar-check', icon: 'policy', roles: ['site_engineer', 'project_manager', 'admin'] },
         { name: 'AI Calibration', path: '/camera-ai/calibration', icon: 'tune', roles: ['site_engineer', 'project_manager', 'admin'] },
       ]
     }
