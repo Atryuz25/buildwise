@@ -15,6 +15,8 @@ export const DailySiteReportPage: React.FC = () => {
     issues: true,
     photos: true
   });
+  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   const toggleSection = (section: keyof typeof activeSections) => {
     setActiveSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -134,6 +136,18 @@ export const DailySiteReportPage: React.FC = () => {
     }
     
     setIsSubmitting(false);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    setIsUploading(true);
+    // Simulate Supabase upload delay
+    setTimeout(() => {
+      setUploadedPhotos(prev => [...prev, 'photo_1.jpg']);
+      showToast('Photo uploaded successfully', 'success');
+      setIsUploading(false);
+    }, 1500);
   };
 
   return (
@@ -357,12 +371,27 @@ export const DailySiteReportPage: React.FC = () => {
                 <span className="material-symbols-outlined">{activeSections.photos ? 'expand_less' : 'expand_more'}</span>
               </button>
               {activeSections.photos && (
-                <div className="p-4 bg-surface">
-                  <div className="border-2 border-dashed border-outline-variant rounded-lg p-8 flex flex-col items-center justify-center text-center hover:bg-surface-variant/20 transition-colors cursor-pointer">
-                    <span className="material-symbols-outlined text-4xl text-primary-fixed-dim mb-2">add_a_photo</span>
-                    <div className="font-bold text-primary">Drag & drop or click to upload photos</div>
+                <div className="p-4 bg-surface space-y-4">
+                  <label className="border-2 border-dashed border-outline-variant rounded-lg p-8 flex flex-col items-center justify-center text-center hover:bg-surface-variant/20 transition-colors cursor-pointer relative">
+                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleFileUpload} disabled={isUploading} accept="image/jpeg, image/png" multiple />
+                    {isUploading ? (
+                      <span className="material-symbols-outlined text-4xl text-primary animate-spin mb-2">progress_activity</span>
+                    ) : (
+                      <span className="material-symbols-outlined text-4xl text-primary-fixed-dim mb-2">add_a_photo</span>
+                    )}
+                    <div className="font-bold text-primary">{isUploading ? 'Uploading to Supabase...' : 'Drag & drop or click to upload photos'}</div>
                     <div className="text-xs text-on-surface-variant mt-1">Accepts JPG/PNG. Max 10 photos. Auto-tagged with GPS.</div>
-                  </div>
+                  </label>
+                  {uploadedPhotos.length > 0 && (
+                    <div className="flex gap-2 flex-wrap">
+                      {uploadedPhotos.map((p, idx) => (
+                        <div key={idx} className="bg-surface-variant/20 border border-outline-variant rounded px-3 py-1 text-xs font-bold text-on-surface flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[14px] text-primary">image</span>
+                          {p}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

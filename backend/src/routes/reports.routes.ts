@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authenticate } from '../middleware/authenticate';
 import { renderPdf } from '../reports/renderPdf';
 import { fetchReportData } from '../reports/reportData';
+import { stringify } from 'csv-stringify/sync';
 
 const router = Router({ mergeParams: true });
 const prisma = new PrismaClient();
@@ -64,6 +65,37 @@ router.get('/export-pdf', authenticate, async (req, res) => {
     res.send(Buffer.from(pdfBuffer));
   } catch (err: any) {
     console.error('PDF Export Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET export CSV
+router.get('/export-csv', authenticate, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { type } = req.query;
+
+    if (!type) {
+      return res.status(400).json({ error: 'Report type is required' });
+    }
+
+    const data = await fetchReportData(projectId as string, type as string);
+    
+    // Depending on the report type, shape the data for CSV
+    let csvData: any[] = [];
+    if (data && data.items && Array.isArray(data.items)) {
+       csvData = data.items;
+    } else {
+       csvData = [data]; // fallback
+    }
+
+    const csvOutput = stringify(csvData, { header: true });
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=buildwise-${(type as string).toLowerCase()}.csv`);
+    res.send(csvOutput);
+  } catch (err: any) {
+    console.error('CSV Export Error:', err);
     res.status(500).json({ error: err.message });
   }
 });

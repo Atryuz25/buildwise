@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../../shared/components/ToastContext';
 import { apiClient } from '../../api/apiClient';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 export const DelayAttributionLogPage: React.FC = () => {
   const { showToast } = useToast();
@@ -11,6 +12,7 @@ export const DelayAttributionLogPage: React.FC = () => {
   // Data State
   const [delayEntries, setDelayEntries] = useState<any[]>([]);
   const [totalDays, setTotalDays] = useState(0);
+  const [causeData, setCauseData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchDelays = async () => {
@@ -31,8 +33,15 @@ export const DelayAttributionLogPage: React.FC = () => {
         setDelayEntries(mapped);
         
         let days = 0;
-        data.forEach((d: any) => { days += d.impactDays });
+        const causesMap: Record<string, number> = {};
+        data.forEach((d: any) => { 
+          days += d.impactDays; 
+          causesMap[d.cause] = (causesMap[d.cause] || 0) + 1;
+        });
         setTotalDays(days);
+        
+        const chartData = Object.keys(causesMap).map(key => ({ name: key, value: causesMap[key] }));
+        setCauseData(chartData);
       } catch (err) {
         showToast('Failed to load delays', 'error');
       }
@@ -63,6 +72,11 @@ export const DelayAttributionLogPage: React.FC = () => {
       case 'Medium': return 'bg-[#c2410c] text-white';
       default: return 'bg-secondary-container text-on-secondary-container';
     }
+  };
+
+  const getPieColor = (index: number) => {
+    const colors = ['#c2410c', '#0ea5e9', '#14b8a6', '#a855f7', '#f43f5e', '#64748b'];
+    return colors[index % colors.length];
   };
 
   return (
@@ -144,12 +158,19 @@ export const DelayAttributionLogPage: React.FC = () => {
           </div>
         </div>
         <div className="bg-surface-lowest border border-outline-variant rounded p-4 flex items-center gap-4">
-           <div className="w-12 h-12 rounded-full bg-surface-variant/30 flex items-center justify-center">
-            <span className="material-symbols-outlined text-primary-fixed-dim">query_stats</span>
-          </div>
+           <div className="w-16 h-16 shrink-0">
+             <ResponsiveContainer width="100%" height="100%">
+               <PieChart>
+                 <Pie data={causeData} innerRadius={20} outerRadius={30} dataKey="value" stroke="none">
+                   {causeData.map((entry, index) => <Cell key={`cell-${index}`} fill={getPieColor(index)} />)}
+                 </Pie>
+                 <Tooltip contentStyle={{ fontSize: '10px', padding: '4px' }} />
+               </PieChart>
+             </ResponsiveContainer>
+           </div>
           <div>
             <div className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Most Common Cause</div>
-            <div className="text-lg font-bold text-primary">Weather (3)</div>
+            <div className="text-lg font-bold text-primary">{causeData.length > 0 ? [...causeData].sort((a,b) => b.value - a.value)[0].name : 'N/A'}</div>
           </div>
         </div>
         <div className="bg-surface-lowest border border-outline-variant rounded p-4 flex items-center gap-4">

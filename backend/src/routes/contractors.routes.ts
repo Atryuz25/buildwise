@@ -37,10 +37,30 @@ router.post('/', async (req, res) => {
   }
 });
 
+// GET all contractors
+router.get('/', async (req, res) => {
+  try {
+    const contractors = await prisma.contractor.findMany({
+      where: { isDeleted: false },
+      include: { crews: true }
+    });
+
+    const decryptedContractors = contractors.map(c => ({
+      ...c,
+      bankDetails: c.bankDetails ? decrypt(c.bankDetails) : ''
+    }));
+
+    res.json(decryptedContractors);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET contractor leaderboard
 router.get('/leaderboard', async (req, res) => {
   try {
     const contractors = await prisma.contractor.findMany({
+      where: { isDeleted: false },
       include: {
         crews: {
           include: {
@@ -106,7 +126,7 @@ router.get('/leaderboard', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const contractor = await prisma.contractor.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id, isDeleted: false },
       include: { crews: true }
     });
 
@@ -124,11 +144,11 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// PUT edit contractor
-router.put('/:id', async (req, res) => {
+// PATCH edit contractor
+router.patch('/:id', async (req, res) => {
   try {
-    const { name, trade, phone, bankDetails, status } = req.body;
-    let updateData: any = { name, trade, phone, status };
+    const { name, trade, phone, bankDetails } = req.body;
+    let updateData: any = { name, trade, phone };
     
     if (bankDetails) {
       updateData.bankDetails = encrypt(bankDetails);
@@ -137,6 +157,20 @@ router.put('/:id', async (req, res) => {
     const contractor = await prisma.contractor.update({
       where: { id: req.params.id },
       data: updateData
+    });
+
+    res.json({ success: true, contractor });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE soft delete contractor
+router.delete('/:id', async (req, res) => {
+  try {
+    const contractor = await prisma.contractor.update({
+      where: { id: req.params.id },
+      data: { isDeleted: true }
     });
 
     res.json({ success: true, contractor });

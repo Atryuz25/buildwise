@@ -103,9 +103,15 @@ export const ProjectManagerDashboard: React.FC = () => {
             </table>
           </div>
           
-          <h2 className="font-section-heading text-section-heading text-primary mb-4 mt-6 flex items-center justify-between">
-            Contractor Payments Due
-            <button onClick={() => navigate('/payments')} className="text-xs font-bold text-primary hover:underline">View All</button>
+          <h2 className="font-section-heading text-section-heading text-primary mb-4 mt-6 flex flex-col gap-2">
+            <button onClick={() => navigate('/camera-ai/pile-measurement')} className="w-full h-[44px] bg-primary text-on-primary font-bold rounded flex items-center justify-start px-4 gap-3 hover:opacity-90 transition-opacity">
+              <span className="material-symbols-outlined text-[20px]">straighten</span>
+              + Measure material pile
+            </button>
+            <button onClick={() => navigate('/payments')} className="w-full h-[44px] bg-surface-lowest border border-primary text-primary font-bold rounded flex items-center justify-start px-4 gap-3 hover:bg-primary-container/10 transition-colors">
+              <span className="material-symbols-outlined text-[20px]">account_balance</span>
+              Review Payment Milestones
+            </button>
           </h2>
           <div className="flex-1 overflow-y-auto">
             <table className="w-full text-left text-sm">

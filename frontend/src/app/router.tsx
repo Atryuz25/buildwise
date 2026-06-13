@@ -15,10 +15,13 @@ import { WeatherRiskPage } from '../features/weather-risk/WeatherRiskPage';
 import { DailySiteReportPage } from '../features/daily-report/DailySiteReportPage';
 import { AttendanceTrackerPage } from '../features/attendance/AttendanceTrackerPage';
 import { CrewProductivityPage } from '../features/productivity/CrewProductivityPage';
+import { OutputTrackingPage } from '../features/productivity/OutputTrackingPage';
 import { LabourCostAnalysisPage } from '../features/cost/LabourCostAnalysisPage';
 import { DelayAttributionLogPage } from '../features/delays/DelayAttributionLogPage';
 import { ContractorsManagementPage } from '../features/contractors/ContractorsManagementPage';
 import { PaymentMilestoneTracker } from '../features/payments/PaymentMilestoneTracker';
+import { PileMeasurementPage } from '../features/camera-ai/PileMeasurementPage';
+import { AICalibrationPage } from '../features/camera-ai/AICalibrationPage';
 
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles: string[] }) => {
   const role = localStorage.getItem('userRole');
@@ -102,6 +105,10 @@ const router = createBrowserRouter([
         element: <CrewProductivityPage />,
       },
       {
+        path: 'output-tracking',
+        element: <OutputTrackingPage />,
+      },
+      {
         path: 'contractors',
         element: <ContractorsManagementPage />,
       },
@@ -116,6 +123,14 @@ const router = createBrowserRouter([
       {
         path: 'payments',
         element: <PaymentMilestoneTracker />,
+      },
+      {
+        path: 'camera-ai/pile-measurement',
+        element: <PileMeasurementPage />,
+      },
+      {
+        path: 'camera-ai/calibration',
+        element: <AICalibrationPage />,
       },
     ]
   }

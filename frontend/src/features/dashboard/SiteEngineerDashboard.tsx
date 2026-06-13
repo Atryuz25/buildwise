@@ -27,6 +27,10 @@ export const SiteEngineerDashboard: React.FC = () => {
         {/* Column 1 — Today's actions (30%) */}
         <div className="w-[30%] flex flex-col gap-6">
           <div className="flex flex-col gap-3">
+            <button onClick={() => navigate('/camera-ai/pile-measurement')} className="w-full h-[44px] bg-primary text-on-primary font-bold rounded flex items-center justify-start px-4 gap-3 hover:opacity-90 transition-opacity">
+              <span className="material-symbols-outlined text-[20px]">straighten</span>
+              + Measure material pile
+            </button>
             <button onClick={() => navigate('/estimator')} className="w-full h-[44px] bg-surface-lowest border border-primary text-primary font-bold rounded flex items-center justify-start px-4 gap-3 hover:bg-primary-container/10 transition-colors">
               <span className="material-symbols-outlined text-[20px]">calculate</span>
               + New concrete estimate

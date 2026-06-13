@@ -10,6 +10,10 @@ export const InventoryPage: React.FC = () => {
   const [materials, setMaterials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
+  const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
+  const [deliveryMaterialId, setDeliveryMaterialId] = useState('');
+  const [deliveryAmount, setDeliveryAmount] = useState('');
+  const [deliveryReference, setDeliveryReference] = useState('');
   const [adjustmentAmount, setAdjustmentAmount] = useState('');
   const [adjustmentReason, setAdjustmentReason] = useState('');
 
@@ -50,27 +54,9 @@ export const InventoryPage: React.FC = () => {
           <div className="p-4 border-b border-outline-variant flex justify-between items-center shrink-0 bg-surface/50">
             <h2 className="font-section-heading text-primary font-bold">Current Stock</h2>
             <button 
-              onClick={async () => {
-                if (!selectedMaterial) {
-                  showToast('Please select a material first', 'error');
-                  return;
-                }
-                const amount = window.prompt(`Enter amount of ${selectedMaterial.name} delivered (${selectedMaterial.unit}):`);
-                if (amount && !isNaN(Number(amount))) {
-                  try {
-                    await api.materials.logDelivery(selectedMaterial.id, Number(amount), 'INV-1234');
-                    showToast(`Logged ${amount} ${selectedMaterial.unit} delivery`, 'success');
-                    // Refresh
-                    const projs = await api.projects.getAll();
-                    if (projs.length > 0) {
-                      const inv = await api.materials.getInventory(projs[0].id);
-                      setMaterials(inv);
-                      setSelectedMaterial(inv.find((m: any) => m.id === selectedMaterial.id) || null);
-                    }
-                  } catch(e) {
-                    showToast('Failed to log delivery', 'error');
-                  }
-                }
+              onClick={() => {
+                setDeliveryMaterialId(selectedMaterial ? selectedMaterial.id : (materials.length > 0 ? materials[0].id : ''));
+                setIsDeliveryModalOpen(true);
               }} 
               className="bg-primary-container text-on-primary py-1.5 px-3 rounded text-sm font-bold hover:opacity-90 flex items-center justify-center gap-1">
               <span className="material-symbols-outlined text-[16px]">add</span> Log Delivery
@@ -166,6 +152,99 @@ export const InventoryPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Log Delivery Modal */}
+      {isDeliveryModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center backdrop-blur-sm">
+          <div className="bg-surface-lowest rounded-lg border border-outline-variant w-[400px] overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-variant/30">
+              <h2 className="font-section-heading font-bold text-primary flex items-center gap-2">
+                <span className="material-symbols-outlined text-[20px]">local_shipping</span>
+                Log Material Delivery
+              </h2>
+              <button onClick={() => setIsDeliveryModalOpen(false)} className="text-on-surface-variant hover:text-primary transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="p-6 flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Select Material *</label>
+                <select 
+                  className="w-full border border-outline-variant rounded p-2 text-sm focus:border-primary-container bg-surface"
+                  value={deliveryMaterialId}
+                  onChange={(e) => setDeliveryMaterialId(e.target.value)}
+                >
+                  <option value="" disabled>-- Choose Material --</option>
+                  {materials.map((m: any) => (
+                    <option key={m.id} value={m.id}>{m.name} ({m.unit})</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Delivered Amount *</label>
+                <input 
+                  required
+                  type="number"
+                  value={deliveryAmount}
+                  onChange={e => setDeliveryAmount(e.target.value)}
+                  className="w-full border border-outline-variant rounded p-2 text-sm focus:border-primary-container bg-surface" 
+                  placeholder="e.g. 500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Reference ID / Invoice #</label>
+                <input 
+                  type="text"
+                  value={deliveryReference}
+                  onChange={e => setDeliveryReference(e.target.value)}
+                  className="w-full border border-outline-variant rounded p-2 text-sm focus:border-primary-container bg-surface" 
+                  placeholder="e.g. INV-98765"
+                />
+              </div>
+              
+              <div className="mt-4 flex gap-3 justify-end">
+                <button type="button" onClick={() => setIsDeliveryModalOpen(false)} className="px-4 py-2 border border-outline-variant rounded font-bold hover:bg-surface-variant transition-colors text-on-surface-variant text-sm">
+                  Cancel
+                </button>
+                <button 
+                  onClick={async () => {
+                    const amt = Number(deliveryAmount);
+                    if (!deliveryMaterialId || isNaN(amt) || amt <= 0) {
+                      showToast('Please select a material and enter a valid positive amount', 'error');
+                      return;
+                    }
+                    try {
+                      await api.materials.logDelivery(deliveryMaterialId, amt, deliveryReference || 'DELIVERY');
+                      const mInfo = materials.find(m => m.id === deliveryMaterialId);
+                      showToast(`Successfully logged delivery of ${amt} ${mInfo?.unit || ''} ${mInfo?.name || ''}`, 'success');
+                      
+                      setIsDeliveryModalOpen(false);
+                      setDeliveryAmount('');
+                      setDeliveryReference('');
+                      
+                      // Refresh
+                      const projs = await api.projects.getAll();
+                      if (projs.length > 0) {
+                        const inv = await api.materials.getInventory(projs[0].id);
+                        setMaterials(inv);
+                        if (selectedMaterial?.id === deliveryMaterialId) {
+                          setSelectedMaterial(inv.find((m: any) => m.id === deliveryMaterialId) || null);
+                        }
+                      }
+                    } catch(e) {
+                      showToast('Failed to log delivery', 'error');
+                    }
+                  }} 
+                  className="px-4 py-2 bg-primary text-on-primary rounded font-bold hover:opacity-90 transition-opacity text-sm disabled:opacity-50 flex items-center gap-1"
+                >
+                  <span className="material-symbols-outlined text-[18px]">check</span>
+                  Save Delivery
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Manual Adjustment Modal */}
       {isAdjustmentModalOpen && selectedMaterial && (

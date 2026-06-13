@@ -50,10 +50,46 @@ export const ReportsPage: React.FC = () => {
     fetchReportData();
   }, [activeReport, activeProjectId]);
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!activeProjectId) return;
     showToast(`Generating PDF...`, 'info');
-    window.open(`http://localhost:3005/api/projects/${activeProjectId}/reports/export-pdf?type=${activeReport}`, '_blank');
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:3005/api/projects/${activeProjectId}/reports/export-pdf?type=${activeReport}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('PDF export failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `buildwise-${activeReport.toLowerCase()}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      showToast('Failed to export PDF', 'error');
+    }
+  };
+
+  const handleExportCSV = async () => {
+    if (!activeProjectId) return;
+    showToast(`Generating CSV...`, 'info');
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:3005/api/projects/${activeProjectId}/reports/export-csv?type=${activeReport}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('CSV export failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `buildwise-${activeReport.toLowerCase()}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      showToast('Failed to export CSV', 'error');
+    }
   };
 
   const renderChart = () => {
@@ -130,6 +166,9 @@ export const ReportsPage: React.FC = () => {
               {reports.find(r => r.id === activeReport)?.label}
             </h2>
             <div className="flex gap-3 no-print">
+              <button onClick={handleExportCSV} className="px-4 py-2 bg-surface border border-outline-variant text-on-surface font-bold rounded hover:bg-surface-variant flex items-center justify-center gap-2 transition-colors text-sm">
+                <span className="material-symbols-outlined text-[18px]">table</span> Export CSV
+              </button>
               <button onClick={handleExportPDF} className="px-4 py-2 bg-secondary-container text-on-secondary-container font-bold rounded hover:opacity-90 flex items-center justify-center gap-2 transition-colors text-sm">
                 <span className="material-symbols-outlined text-[18px]">download</span> Export PDF
               </button>

@@ -140,6 +140,7 @@ export const LabourCostAnalysisPage: React.FC = () => {
                       <th className="p-4 text-right">Days Worked</th>
                       <th className="p-4 text-right">Total Cost</th>
                       <th className="p-4 text-right">Budget</th>
+                      <th className="p-4 text-right">True Cost / Unit</th>
                       <th className="p-4 text-right">Variance</th>
                     </tr>
                   </thead>
@@ -154,6 +155,7 @@ export const LabourCostAnalysisPage: React.FC = () => {
                           <td className="p-4 text-right font-bold">{row.daysWorked}</td>
                           <td className="p-4 text-right font-bold">₹{row.totalCost.toLocaleString()}</td>
                           <td className="p-4 text-right text-on-surface-variant">₹{row.budget.toLocaleString()}</td>
+                          <td className="p-4 text-right font-bold text-primary">₹{row.trueCostPerUnit} / {row.unit}</td>
                           <td className={`p-4 text-right font-bold ${variancePct > 0 ? 'text-error' : 'text-[#166534]'}`}>
                             {variancePct > 0 ? '+' : ''}{variancePct.toFixed(1)}%
                           </td>

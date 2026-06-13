@@ -12,14 +12,20 @@ router.get('/', async (req, res) => {
       orderBy: { dueDate: 'asc' }
     });
 
-    const transformed = milestones.map(m => ({
-      id: m.id,
-      project: m.project.name,
-      milestone: m.title,
-      amount: m.amount,
-      dueDate: new Date(m.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-      status: m.status
-    }));
+    const transformed = milestones.map(m => {
+      let currentStatus = m.status;
+      if (currentStatus !== 'PAID' && new Date(m.dueDate) < new Date()) {
+        currentStatus = 'OVERDUE';
+      }
+      return {
+        id: m.id,
+        project: m.project.name,
+        milestone: m.title,
+        amount: m.amount,
+        dueDate: new Date(m.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+        status: currentStatus
+      };
+    });
 
     res.json(transformed);
   } catch (err: any) {

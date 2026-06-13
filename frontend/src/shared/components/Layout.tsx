@@ -3,6 +3,7 @@ import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
 import { useToast } from './ToastContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/apiClient';
+import { OfflineBanner } from './OfflineBanner';
 
 export const Layout: React.FC = () => {
   const location = useLocation();
@@ -74,6 +75,7 @@ export const Layout: React.FC = () => {
         { name: 'Daily Site Report', path: '/daily-report', icon: 'assignment', roles: ['site_engineer', 'project_manager'] },
         { name: 'Attendance', path: '/attendance', icon: 'co_present', roles: ['site_engineer', 'project_manager', 'admin'] },
         { name: 'Crew Productivity', path: '/productivity', icon: 'group_work', roles: ['project_manager', 'admin'] },
+        { name: 'Output Tracking', path: '/output-tracking', icon: 'trending_up', roles: ['site_engineer', 'project_manager', 'admin'] },
         { name: 'Contractors', path: '/contractors', icon: 'handyman', roles: ['project_manager', 'admin'] },
         { name: 'Labour Cost', path: '/labour-cost', icon: 'payments', roles: ['project_manager', 'admin'] },
         { name: 'Delay Log', path: '/delays', icon: 'pending_actions', roles: ['project_manager', 'admin'] },
@@ -86,6 +88,13 @@ export const Layout: React.FC = () => {
         { name: 'Weather Risk', path: '/weather', icon: 'cloud_sync', roles: ['site_engineer', 'project_manager'] },
         { name: 'Reports', path: '/reports', icon: 'analytics', roles: ['project_manager', 'admin'] },
       ]
+    },
+    {
+      title: 'Camera AI',
+      items: [
+        { name: 'Pile Measurement', path: '/camera-ai/pile-measurement', icon: 'straighten', roles: ['site_engineer', 'project_manager', 'admin'] },
+        { name: 'AI Calibration', path: '/camera-ai/calibration', icon: 'tune', roles: ['site_engineer', 'project_manager', 'admin'] },
+      ]
     }
   ];
 
@@ -97,15 +106,9 @@ export const Layout: React.FC = () => {
           <div className="flex items-center gap-3 mt-2">
             <div className="w-8 h-8 bg-on-primary rounded flex items-center justify-center text-primary font-bold">BW</div>
             <div className="flex flex-col w-full pr-2">
-              <select 
-                className="font-page-title text-sm font-bold text-on-primary leading-tight bg-transparent border-b border-primary-fixed-variant outline-none focus:border-secondary transition-colors pb-1 cursor-pointer"
-                value={selectedProjectId || ''}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
-              >
-                {projects?.map((p: any) => (
-                  <option key={p.id} value={p.id} className="text-on-surface bg-surface-lowest">{p.name}</option>
-                ))}
-              </select>
+              <div className="font-page-title text-sm font-bold text-on-primary leading-tight pb-1">
+                {projects?.[0]?.name || 'Skyline Towers'}
+              </div>
               <div className="text-on-primary-fixed-variant text-[11px] mt-1">Construction Site</div>
             </div>
           </div>
@@ -216,6 +219,7 @@ export const Layout: React.FC = () => {
           <Outlet />
         </main>
       </div>
+      <OfflineBanner />
     </div>
   );
 };

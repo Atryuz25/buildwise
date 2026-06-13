@@ -16,8 +16,7 @@ export const ContractorModal: React.FC<ModalProps> = ({ isOpen, onClose, onSucce
     name: contractorData?.name || '',
     trade: contractorData?.trade || 'Civil',
     phone: contractorData?.phone || '',
-    bankDetails: contractorData?.bankDetails || '',
-    status: contractorData?.status || 'Active'
+    bankDetails: contractorData?.bankDetails || ''
   });
 
   if (!isOpen) return null;
@@ -28,7 +27,7 @@ export const ContractorModal: React.FC<ModalProps> = ({ isOpen, onClose, onSucce
     try {
       if (contractorData) {
         // Edit mode
-        await apiClient.put(`/contractors/${contractorData.id}`, formData);
+        await apiClient.patch(`/contractors/${contractorData.id}`, formData);
         showToast('Contractor updated successfully', 'success');
       } else {
         // Add mode
@@ -100,20 +99,7 @@ export const ContractorModal: React.FC<ModalProps> = ({ isOpen, onClose, onSucce
             />
             <div className="text-[10px] text-on-surface-variant mt-1">Bank details will be encrypted before saving.</div>
           </div>
-          {contractorData && (
-            <div>
-              <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Status</label>
-              <select 
-                value={formData.status}
-                onChange={e => setFormData({...formData, status: e.target.value})}
-                className="w-full border border-outline-variant rounded p-2 text-sm focus:border-primary-container bg-surface"
-              >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-                <option value="Blacklisted">Blacklisted</option>
-              </select>
-            </div>
-          )}
+
           <div className="mt-4 flex gap-3 justify-end">
             <button type="button" onClick={onClose} className="px-4 py-2 border border-outline-variant rounded font-bold hover:bg-surface-variant transition-colors text-on-surface-variant text-sm">
               Cancel
@@ -136,7 +122,9 @@ export const CrewModal: React.FC<{ isOpen: boolean; onClose: () => void; onSucce
     projectId: '',
     tradeType: 'Civil',
     size: 10,
-    dailyRate: 500
+    dailyRate: 500,
+    targetQty: 0,
+    targetUnit: 'units'
   });
 
   if (!isOpen) return null;
@@ -216,6 +204,32 @@ export const CrewModal: React.FC<{ isOpen: boolean; onClose: () => void; onSucce
               onChange={e => setFormData({...formData, dailyRate: parseInt(e.target.value)})}
               className="w-full border border-outline-variant rounded p-2 text-sm focus:border-primary-container bg-surface" 
             />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Target Output Qty</label>
+              <input 
+                type="number"
+                min="0"
+                value={formData.targetQty}
+                onChange={e => setFormData({...formData, targetQty: parseFloat(e.target.value) || 0})}
+                className="w-full border border-outline-variant rounded p-2 text-sm focus:border-primary-container bg-surface" 
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Output Unit</label>
+              <select 
+                value={formData.targetUnit}
+                onChange={e => setFormData({...formData, targetUnit: e.target.value})}
+                className="w-full border border-outline-variant rounded p-2 text-sm focus:border-primary-container bg-surface"
+              >
+                <option value="m³ poured">m³ poured</option>
+                <option value="tonnes tied">tonnes tied</option>
+                <option value="m² blockwork">m² blockwork</option>
+                <option value="sqft painted">sqft painted</option>
+                <option value="units">units</option>
+              </select>
+            </div>
           </div>
           
           <div className="mt-4 flex gap-3 justify-end">

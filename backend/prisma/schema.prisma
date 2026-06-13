@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // Enum not supported in SQLite, using String instead
@@ -52,6 +53,8 @@ model Project {
   outputs       OutputRecord[]
   paymentMilestones PaymentMilestone[]
   dailyReports  DailySiteReport[]
+  pileMeasurements PileMeasurement[]
+  aiReferencePhotos AiReferencePhoto[]
 }
 
 model ProjectMember {
@@ -146,6 +149,7 @@ model Contractor {
   trade       String
   phone       String
   bankDetails String   // Encrypted
+  isDeleted   Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   crews       Crew[]
@@ -159,6 +163,8 @@ model Crew {
   tradeType      String       // Masonry, Steel, etc.
   size           Int
   dailyRate      Float        @default(0)
+  targetQty      Float?
+  targetUnit     String?
   createdAt      DateTime     @default(now())
 
   project        Project      @relation(fields: [projectId], references: [id])
@@ -320,4 +326,34 @@ model Notification {
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id])
+}
+
+model PileMeasurement {
+  id              String   @id @default(uuid())
+  projectId       String
+  materialType    String
+  estimatedVolume Float
+  inventoryVolume Float
+  divergencePct   Float
+  flagged         Boolean  @default(false)
+  photoUrl        String?
+  gps             String?
+  rawAiResponse   String?
+  createdBy       String
+  createdAt       DateTime @default(now())
+
+  project         Project  @relation(fields: [projectId], references: [id])
+}
+
+model AiReferencePhoto {
+  id          String   @id @default(uuid())
+  projectId   String
+  feature     String   // e.g. 'PILE_MEASUREMENT', 'REBAR_CHECK', 'PROGRESS_DETECTION'
+  category    String   // e.g. 'Sand', 'Aggregate', 'Clean Rebar'
+  metadata    String?  // e.g. '150' (the exact volume/context of the reference)
+  photoUrl    String
+  uploadedBy  String
+  createdAt   DateTime @default(now())
+
+  project     Project  @relation(fields: [projectId], references: [id])
 }

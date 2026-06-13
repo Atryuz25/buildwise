@@ -59,6 +59,19 @@ export const ContractorsManagementPage: React.FC = () => {
     fetchDetail();
   }, [selectedContractorId]);
 
+  const handleDeleteContractor = async () => {
+    if (!selectedContractorId) return;
+    if (!window.confirm('Are you sure you want to delete this contractor?')) return;
+    try {
+      await apiClient.delete(`/contractors/${selectedContractorId}`);
+      showToast('Contractor deleted successfully', 'success');
+      setSelectedContractorId(null);
+      fetchLeaderboard();
+    } catch(e) {
+      showToast('Failed to delete contractor', 'error');
+    }
+  };
+
   const selectedContractor = contractors.find(c => c.id === selectedContractorId);
 
   const getEfficiencyBadge = (eff: number) => {
@@ -132,11 +145,16 @@ export const ContractorsManagementPage: React.FC = () => {
                 <div className="flex justify-between items-start mb-6">
                   <div>
                     <h2 className="text-2xl font-page-title font-bold text-primary mb-1">{selectedContractor.name}</h2>
-                    <div className="text-sm text-on-surface-variant">Partner since {selectedContractor.since}</div>
+                    <div className="text-sm text-on-surface-variant">Partner since {selectedContractor.since || new Date().getFullYear()}</div>
                   </div>
-                  <button onClick={() => setIsEditContractorOpen(true)} className="px-3 py-1.5 border border-outline-variant rounded bg-surface text-sm font-bold text-primary hover:bg-surface-variant flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[16px]">edit</span> Edit
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setIsEditContractorOpen(true)} className="px-3 py-1.5 border border-outline-variant rounded bg-surface text-sm font-bold text-primary hover:bg-surface-variant flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[16px]">edit</span> Edit
+                    </button>
+                    <button onClick={handleDeleteContractor} className="px-3 py-1.5 border border-error/30 rounded bg-error-container text-sm font-bold text-error hover:bg-error/20 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[16px]">delete</span> Delete
+                    </button>
+                  </div>
                 </div>
                 
                 {/* Tabs */}
@@ -226,20 +244,20 @@ export const ContractorsManagementPage: React.FC = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          <tr className="border-b border-outline-variant/50 hover:bg-surface-variant/10">
-                            <td className="p-3 font-bold text-primary">Civil Team A</td>
-                            <td className="p-3">Civil</td>
-                            <td className="p-3">Ramesh</td>
-                            <td className="p-3 text-center">45</td>
-                            <td className="p-3 text-right text-xs">m³ poured / day</td>
-                          </tr>
-                          <tr className="border-b border-outline-variant/50 hover:bg-surface-variant/10">
-                            <td className="p-3 font-bold text-primary">Civil Team B</td>
-                            <td className="p-3">Civil</td>
-                            <td className="p-3">Suresh</td>
-                            <td className="p-3 text-center">30</td>
-                            <td className="p-3 text-right text-xs">m³ poured / day</td>
-                          </tr>
+                          {selectedContractor.crews?.map((crew: any) => (
+                            <tr key={crew.id} className="border-b border-outline-variant/50 hover:bg-surface-variant/10">
+                              <td className="p-3 font-bold text-primary">{crew.tradeType} Crew</td>
+                              <td className="p-3">{crew.tradeType}</td>
+                              <td className="p-3">{selectedContractor.name}</td>
+                              <td className="p-3 text-center">{crew.size}</td>
+                              <td className="p-3 text-right text-xs">{crew.targetQty ? `${crew.targetQty} ${crew.targetUnit} / day` : 'No target set'}</td>
+                            </tr>
+                          ))}
+                          {(!selectedContractor.crews || selectedContractor.crews.length === 0) && (
+                            <tr>
+                              <td colSpan={5} className="p-4 text-center text-on-surface-variant">No crews assigned to this project yet.</td>
+                            </tr>
+                          )}
                         </tbody>
                       </table>
                     </div>

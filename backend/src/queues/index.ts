@@ -1,34 +1,33 @@
 import { Queue, Worker } from 'bullmq';
 import IORedis from 'ioredis';
-import RedisMock from 'ioredis-mock';
+import cron from 'node-cron';
+import axios from 'axios';
+import { PrismaClient } from '@prisma/client';
+import dotenv from 'dotenv';
+dotenv.config();
 
-// Shared Redis connection
-const connection = process.env.NODE_ENV === 'development'
-  ? new RedisMock() as any
-  : new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
-      maxRetriesPerRequest: null,
-    });
+const prisma = new PrismaClient();
 
-// Create Queues - Mock them if in dev to prevent BullMQ script hangs on ioredis-mock
-export const queues = process.env.NODE_ENV === 'development' 
-? {
-    auditReminder: { add: async () => {} } as any,
-    reportReminder: { add: async () => {} } as any,
-    whatsappDigest: { add: async () => {} } as any,
-    milestoneOverdue: { add: async () => {} } as any,
-    inventoryAlert: { add: async () => {} } as any,
-  }
-: {
+// Use real Redis if UPSTASH is provided, else mock
+let redisUrl = process.env.UPSTASH_REDIS_URL;
+if (redisUrl?.startsWith('http')) {
+  const host = redisUrl.replace('https://', '').replace('http://', '');
+  redisUrl = `rediss://default:${process.env.UPSTASH_REDIS_TOKEN}@${host}:6379`;
+}
+
+const connection = redisUrl
+  ? new IORedis(redisUrl, { maxRetriesPerRequest: null })
+  : require('ioredis-mock')();
+
+export const queues = {
     auditReminder: new Queue('audit-reminder', { connection }),
     reportReminder: new Queue('report-reminder', { connection }),
     whatsappDigest: new Queue('whatsapp-digest', { connection }),
     milestoneOverdue: new Queue('milestone-overdue', { connection }),
     inventoryAlert: new Queue('inventory-alert', { connection }),
-  };
+};
 
-// Create Workers
 const createWorker = (queueName: string, processor: (job: any) => Promise<void>) => {
-  if (process.env.NODE_ENV === 'development') return null; // Skip workers in dev
   const worker = new Worker(queueName, processor, { connection });
   worker.on('failed', (job, err) => {
     console.error(`[Worker Error] ${queueName} job ${job?.id} failed:`, err.message);
@@ -77,33 +76,104 @@ createWorker('inventory-alert', async (job) => {
   console.log(`[Inventory Worker] Sent Critical Inventory Alert: ${materialName} has ${remainingDays} days remaining`);
 });
 
-// 5. WhatsApp Digest Worker (handles remaining triggers via different job names)
+const sendWhatsApp = async (to: string, message: string) => {
+  if (process.env.MOCK_WHATSAPP === 'true' || !process.env.WHATSAPP_API_KEY) {
+    console.log(`[MOCK WHATSAPP to ${to}]: ${message}`);
+    return;
+  }
+  
+  try {
+    await axios.post(
+      `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
+      {
+        messaging_product: 'whatsapp',
+        to: to,
+        type: 'text',
+        text: { body: message }
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.WHATSAPP_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    console.log(`[WHATSAPP SENT to ${to}]`);
+  } catch (err: any) {
+    console.error('[WHATSAPP ERROR]', err?.response?.data || err.message);
+  }
+};
+
+// 5. WhatsApp Digest Worker
 createWorker('whatsapp-digest', async (job) => {
   const { name, data } = job;
+  const pmPhone = '+919876543210'; // In a real app, query User DB for PM's phone
+  const engPhone = '+919876543211';
   
   switch(name) {
     case 'daily-digest':
       const pmDedup = `dedup:daily-digest:${data.pmId}`;
       if (!(await shouldProcess(pmDedup))) return;
-      console.log(`[WhatsApp Worker] Type: daily-digest | Sent 6PM Daily Digest to PM. Audits: ${data.auditSummary}, Attendance: ${data.attendanceSummary}`);
+      await sendWhatsApp(pmPhone, `📊 *6PM Daily Digest*\nAudits: ${data.auditSummary}\nAttendance: ${data.attendanceSummary}`);
       break;
     
     case 'high-risk-variance':
-      console.log(`[WhatsApp Worker] Type: high-risk-variance | Sent High-Risk Variance Alert: ${data.material} at ${data.variancePct}% variance`);
+      await sendWhatsApp(pmPhone, `⚠️ *High-Risk Variance Alert*\nMaterial: ${data.material}\nVariance: ${data.variancePct}%`);
       break;
 
     case 'headcount-divergence':
-      console.log(`[WhatsApp Worker] Type: headcount-divergence | Sent Headcount Divergence Alert for ${data.crew}: Reported ${data.reported} vs Estimated ${data.estimated}`);
+      await sendWhatsApp(pmPhone, `🤖 *AI Headcount Divergence*\nCrew: ${data.crew}\nReported: ${data.reported}\nAI Detected: ${data.detected}\nDivergence: ${data.divergencePct}%`);
+      break;
+      
+    case 'severe-delay':
+      await sendWhatsApp(pmPhone, `🚨 *Severe Delay Alert*\nCause: ${data.cause}\nHours Lost: ${data.hours}`);
       break;
 
-    case 'pm-manual-reminder':
-      console.log(`[WhatsApp Worker] Type: pm-manual-reminder | PM sent manual reminder to ${data.engineerName}: "${data.message}"`);
+    case 'milestone-overdue':
+      await sendWhatsApp(pmPhone, `💰 *Payment Overdue*\nContractor: ${data.contractor}\nAmount: ₹${data.amount}\nDays Overdue: ${data.daysOverdue}`);
+      break;
+      
+    case 'audit-alert':
+      await sendWhatsApp(engPhone, `⏰ *Overdue Audit Alert*\nEngineer: ${data.engineerName}\nDays Overdue: ${data.daysOverdue}`);
+      break;
+      
+    case 'inventory-critical':
+      await sendWhatsApp(pmPhone, `📉 *Inventory Critical*\nMaterial: ${data.materialName}\nDays Remaining: ${data.remainingDays}`);
+      break;
+
+    case 'pile-divergence':
+      await sendWhatsApp(pmPhone, `⚠️ *Pile Divergence Alert* — ${data.material} estimated ${data.estimated} cft by AI, inventory shows ${data.inventory} cft (${data.divergence.toFixed(1)}% gap). Project: ${data.projectId}`);
       break;
 
     default:
       console.log(`[WhatsApp Worker] Type: unknown | Received unknown job type: ${name}`);
   }
-  
-  // Artificial delay to mock network request
-  await new Promise(resolve => setTimeout(resolve, 1000));
 });
+
+// CRON SCHEDULER
+export const startCronJobs = () => {
+  // audit-reminder: 5PM daily, checks if no audit submitted that day
+  cron.schedule('0 17 * * *', async () => {
+    console.log('[Cron] Running 5PM audit-reminder');
+    // Mocking finding engineers without audit
+    await queues.auditReminder.add('check-audits', { date: new Date().toISOString() });
+  });
+
+  // report-reminder: 7AM daily, checks if no attendance logged
+  cron.schedule('0 7 * * *', async () => {
+    console.log('[Cron] Running 7AM report-reminder');
+    await queues.reportReminder.add('check-reports', { date: new Date().toISOString() });
+  });
+
+  // whatsapp-digest: 6PM daily PM summary
+  cron.schedule('0 18 * * *', async () => {
+    console.log('[Cron] Running 6PM whatsapp-digest');
+    await queues.whatsappDigest.add('daily-digest', { pmId: 'admin-1', auditSummary: 'All complete', attendanceSummary: '92% overall' });
+  });
+
+  // milestone-overdue: Nightly
+  cron.schedule('0 0 * * *', async () => {
+    console.log('[Cron] Running nightly milestone-overdue check');
+    await queues.milestoneOverdue.add('check-milestones', {});
+  });
+};

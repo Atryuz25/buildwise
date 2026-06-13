@@ -11,17 +11,17 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(10),
   REDIS_URL: z.string().default('redis://localhost:6379'),
   
-  // AWS S3
-  AWS_REGION: z.string(),
-  AWS_ACCESS_KEY_ID: z.string(),
-  AWS_SECRET_ACCESS_KEY: z.string(),
-  S3_BUCKET: z.string(),
+  // AWS S3 (Optional if using Supabase)
+  AWS_REGION: z.string().optional(),
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  S3_BUCKET: z.string().optional(),
   
   // APIs
   OPENWEATHERMAP_API_KEY: z.string().optional(),
   
   // Encryption
-  ENCRYPTION_KEY: z.string().min(32).describe('Must be at least 32 characters for AES-256-CBC'),
+  ENCRYPTION_KEY: z.string().min(32).describe('Must be at least 32 characters for AES-256-CBC').default('12345678901234567890123456789012'),
 });
 
 const _env = envSchema.safeParse(process.env);

@@ -39,5 +39,27 @@ router.get('/', authenticate, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+router.post('/', authenticate, async (req, res) => {
+  try {
+    const { projectId, crewId, cause, severity, impactDays, impactCost, notes, date } = req.body;
+    
+    const delay = await prisma.delay.create({
+      data: {
+        projectId,
+        crewId,
+        cause,
+        severity,
+        impactDays: impactDays ? Number(impactDays) : 0,
+        impactCost: impactCost ? Number(impactCost) : 0,
+        notes,
+        date: date ? new Date(date) : new Date()
+      }
+    });
+
+    res.json({ success: true, delay });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 export default router;

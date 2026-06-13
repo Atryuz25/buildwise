@@ -13,6 +13,10 @@ router.get('/crews', async (req, res) => {
         outputs: {
           orderBy: { date: 'desc' },
           take: 14 // Last 14 days
+        },
+        attendances: {
+          orderBy: { date: 'desc' },
+          take: 14 // Last 14 days
         }
       }
     });
@@ -26,7 +30,14 @@ router.get('/crews', async (req, res) => {
         totalTarget += o.targetQty;
       });
 
-      const efficiency = totalTarget > 0 ? Math.round((totalOutput / totalTarget) * 100) : 0;
+      let expectedWorkers = c.attendances.length * c.size;
+      let actualWorkers = 0;
+      c.attendances.forEach(a => actualWorkers += a.presentCount);
+
+      const outputRatio = totalTarget > 0 ? (totalOutput / totalTarget) * 100 : 0;
+      const attendanceRatio = expectedWorkers > 0 ? (actualWorkers / expectedWorkers) * 100 : 0;
+
+      const efficiency = Math.round((outputRatio * 0.6) + (attendanceRatio * 0.4));
 
       return {
         id: c.id,
@@ -93,7 +104,8 @@ router.get('/labour-cost', async (req, res) => {
   try {
     const crews = await prisma.crew.findMany({
       include: {
-        attendances: true
+        attendances: true,
+        outputs: true
       }
     });
 
@@ -109,6 +121,8 @@ router.get('/labour-cost', async (req, res) => {
       totalLabourCost += totalCost;
 
       const budget = totalCost * 0.9; // mock budget
+      const totalOutput = c.outputs.reduce((acc, o) => acc + o.actualQty, 0);
+      const trueCostPerUnit = totalOutput > 0 ? (totalCost / totalOutput).toFixed(2) : '-';
 
       return {
         id: c.id,
@@ -118,7 +132,9 @@ router.get('/labour-cost', async (req, res) => {
         rate: c.dailyRate,
         daysWorked,
         totalCost,
-        budget
+        budget,
+        trueCostPerUnit,
+        unit: c.targetUnit || 'units'
       };
     });
 

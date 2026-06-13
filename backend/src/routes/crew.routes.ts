@@ -5,10 +5,17 @@ const router = Router();
 const prisma = new PrismaClient();
 
 // Get crews for a project
-router.get('/project/:projectId', async (req, res) => {
+router.get('/:projectId', async (req, res) => {
   try {
     const crews = await prisma.crew.findMany({
       where: { projectId: req.params.projectId },
+      include: {
+        contractor: true,
+        outputs: {
+          orderBy: { date: 'desc' },
+          take: 1
+        }
+      }
     });
     res.json(crews);
   } catch (error) {
@@ -33,4 +40,22 @@ router.post('/', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Set output target
+router.post('/:id/output-target', async (req, res) => {
+  try {
+    const { targetQty, targetUnit } = req.body;
+    const crew = await prisma.crew.update({
+      where: { id: req.params.id },
+      data: {
+        targetQty: Number(targetQty),
+        targetUnit
+      }
+    });
+    res.json(crew);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
